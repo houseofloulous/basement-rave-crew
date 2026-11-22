@@ -140,6 +140,7 @@
   </script>
   <script src="vendor/three.min.js"></script>
   <script src="vendor/GLTFLoader.js"></script>
+  <script src="vendor/SkeletonUtils.js"></script>
   <script>
   window.__basementModels = { template: null, animations: [], mixers: [] };
   function __startBasement3D() {
@@ -346,29 +347,39 @@
       const tpl = window.__basementModels && window.__basementModels.template;
       if (tpl) {
         const root = new THREE.Group();
-        const g = tpl.clone(true);
+        // SkeletonUtils rebinds bones — Object3D.clone leaves every NPC sharing one skeleton
+        // (camera ends up inside a pink Xbot surface mesh).
+        const g = (THREE.SkeletonUtils && THREE.SkeletonUtils.clone)
+          ? THREE.SkeletonUtils.clone(tpl)
+          : tpl.clone(true);
         const scale = (opts.scale != null ? opts.scale : 1) * (0.95 + Math.random() * 0.08);
         g.scale.setScalar(scale);
+        const outfit = new THREE.Color(opts.color != null ? opts.color : 0x121216);
+        const pantsCol = new THREE.Color(opts.pants != null ? opts.pants : 0x1a2744);
+        const skinTone = new THREE.Color(opts.skin != null ? opts.skin : 0xb08a70);
         g.traverse((child) => {
           if (!child.isMesh) return;
           child.castShadow = true;
           child.receiveShadow = true;
+          // Avoid near-plane clipping into dense skinned geo when the cam pulls in
+          if (child.isSkinnedMesh) child.frustumCulled = false;
           if (child.material) {
             const wasArr = Array.isArray(child.material);
             const matsArr = wasArr ? child.material : [child.material];
             const cloned = matsArr.map((m) => {
               const c = m.clone();
-              // Tint body/clothes for variety (black techno / crew)
-              if (opts.color != null && c.color) {
-                const n = ((child.name || '') + ' ' + (m.name || '')).toLowerCase();
-                if (/body|shirt|suit|torso|chest|leg|pant|short|boot|shoe|arm|hand/.test(n) || !n.trim()) {
-                  c.color.lerp(new THREE.Color(opts.color), 0.55);
-                }
+              if (c.side == null) c.side = THREE.FrontSide;
+              const n = ((child.name || '') + ' ' + (m.name || '')).toLowerCase();
+              // Xbot ships as pink robot (Beta_HighLimbs) + brown joints — recolor to club humans
+              if (/joint/i.test(n)) {
+                c.color = outfit.clone().multiplyScalar(0.55);
+              } else if (/limb|surface|beta|body|skin|mesh/i.test(n) || !n.trim()) {
+                // Mostly black techno fit with a hint of skin so faces read as human
+                c.color = skinTone.clone().lerp(outfit, 0.72);
+                if (opts.pants != null) c.color.lerp(pantsCol, 0.15);
               }
-              if (opts.pants != null && c.color) {
-                const n = ((child.name || '') + ' ' + (m.name || '')).toLowerCase();
-                if (/leg|pant|short|boot|shoe|hip/.test(n)) c.color.lerp(new THREE.Color(opts.pants), 0.65);
-              }
+              if (c.metalness != null) c.metalness = 0.05;
+              if (c.roughness != null) c.roughness = 0.85;
               return c;
             });
             child.material = wasArr ? cloned : cloned[0];
@@ -383,14 +394,18 @@
         strapR.position.set(0.08, 1.25, 0.12);
         strapR.rotation.z = -0.28;
         root.add(g, strapL, strapR);
-        // Idle / subtle sway animation if clips exist
+        // Idle only (never walk/run — those displace root and swallow the camera)
         const clips = window.__basementModels.animations || [];
-        if (clips.length && THREE.AnimationMixer) {
+        if (clips.length && THREE.AnimationMixer && opts.animate !== false) {
           const mixer = new THREE.AnimationMixer(g);
-          const idle = clips.find((c) => /idle|stand|breath/i.test(c.name)) || clips[0];
-          const action = mixer.clipAction(idle);
-          action.play();
-          window.__basementModels.mixers.push(mixer);
+          const idle = clips.find((c) => /^idle$/i.test(c.name))
+            || clips.find((c) => /idle|stand|breath/i.test(c.name));
+          if (idle) {
+            const action = mixer.clipAction(idle);
+            action.clampWhenFinished = true;
+            action.play();
+            window.__basementModels.mixers.push(mixer);
+          }
         }
         root.userData.torso = g;
         return root;
@@ -932,11 +947,11 @@
     // Indoor west wall only (do not seal the outdoor courtyard into a black box)
     addBox(X(-1), 1.5, CZ(20, 100), 0.4, 3, W(20, 100), mats.brick);
 
-    // Spawn south of the queue — clear view of body + gate ahead (no head-in-face)
+    // Spawn south of the queue — clear courtyard establishing shot toward the gate
     const player = {
-      pos: new THREE.Vector3(X(8.5), 0, Z(-22)),
+      pos: new THREE.Vector3(X(10), 0, Z(-28)),
       yaw: Math.PI, // face +Z (north) toward gate/ramp
-      pitch: 0.12,  // slight look-down for third-person
+      pitch: 0.18,  // slight look-down for third-person
       speed: 6.2,
       turnSpeed: 3.4, // ←→ turns the view with the body
       radius: 0.35,
@@ -949,8 +964,9 @@
       skin: 0xb08a70,
       hair: 0xd8c48a,
       accent: 0xe10600,
-      scale: 1.02,
+      scale: 1.0,
       spiky: true,
+      animate: true,
     });
     world.add(avatar);
 
@@ -1068,10 +1084,12 @@
       // Mesh faces +Z; walk forward is (-sin yaw, -cos yaw) → offset body by π so turn = face = view
       avatar.rotation.y = player.yaw + Math.PI;
 
-      // Third-person cam: stay in bounds AND pull in before hitting walls (no clip-through)
+      // Third-person cam: stay in bounds, never clip inside the avatar/walls
       function camHitsWall(x, y, z) {
         const r = 0.45;
         for (const b of colliders) {
+          // Ignore thin floor slabs so the follow cam does not collapse into the body
+          if (b.max.y - b.min.y < 0.35) continue;
           if (y < b.min.y - 0.2 || y > b.max.y + 0.35) continue;
           const cx = Math.max(b.min.x, Math.min(x, b.max.x));
           const cz = Math.max(b.min.z, Math.min(z, b.max.z));
@@ -1084,31 +1102,35 @@
       const camMinX = playMinX + camPad, camMaxX = playMaxX - camPad;
       const camMinZ = playMinZ + camPad;
       const headX = player.pos.x, headY = gy + 1.55, headZ = player.pos.z;
-      let dist = 3.4;
-      let camX = headX, camY = gy + 2.3, camZ = headZ;
-      for (let i = 0; i < 12; i++) {
+      // Stay behind the body (≥2.6m) so we never render the inside of the skinned mesh
+      const minDist = 2.6;
+      let dist = 5.2;
+      let camX = headX, camY = gy + 2.6, camZ = headZ;
+      for (let i = 0; i < 14; i++) {
         camX = headX + Math.sin(player.yaw) * dist;
         camZ = headZ + Math.cos(player.yaw) * dist;
-        camY = gy + 2.25 + player.pitch * 0.85;
+        camY = gy + 2.55 + player.pitch * 1.1;
         const inYard = camX >= camMinX && camX <= camMaxX && camZ >= camMinZ;
         if (inYard && !camHitsWall(camX, camY, camZ)) break;
-        dist *= 0.72;
+        dist = Math.max(minDist, dist * 0.78);
+        if (dist <= minDist + 0.01) break;
       }
       camX = Math.max(camMinX, Math.min(camMaxX, camX));
       camZ = Math.max(camMinZ, camZ);
-      if (camHitsWall(camX, camY, camZ) || dist < 1.15) {
-        camX = headX + Math.sin(player.yaw) * 1.2;
-        camZ = headZ + Math.cos(player.yaw) * 1.2;
-        camY = gy + 2.1;
+      if (camHitsWall(camX, camY, camZ)) {
+        camX = headX + Math.sin(player.yaw) * minDist;
+        camZ = headZ + Math.cos(player.yaw) * minDist;
+        camY = gy + 2.35;
         camX = Math.max(camMinX, Math.min(camMaxX, camX));
         camZ = Math.max(camMinZ, camZ);
       }
       camera.position.set(camX, camY, camZ);
-      camera.near = 0.12;
+      camera.near = 0.25;
+      // Look past the shoulders into the yard / gate — not into the torso
       camera.lookAt(
-        headX - Math.sin(player.yaw) * 2.4,
-        gy + 1.35,
-        headZ - Math.cos(player.yaw) * 2.4
+        headX - Math.sin(player.yaw) * 4.5,
+        gy + 1.55,
+        headZ - Math.cos(player.yaw) * 4.5
       );
 
       for (const m of window.__basementModels.mixers) m.update(dt);

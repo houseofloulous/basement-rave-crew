@@ -164,15 +164,15 @@
   <div id="door" role="dialog" aria-label="Choose how to enter">
     <div class="panel">
       <h1>Basement</h1>
-      <p>The look you want is a <strong style="color:#fff">GTA: San Andreas</strong> club mod — same as the reference reel. The browser walkthrough is only a rough prototype.</p>
+      <p>Real look = <strong style="color:#fff">GTA: San Andreas on Mac</strong> (CrossOver) — same as the reference reel. Browser mode is a rough walkthrough only.</p>
       <div class="actions">
-        <a class="primary" href="install.html">Install the real club</a>
-        <button type="button" class="secondary" id="protoBtn">Browser prototype</button>
+        <a class="primary" href="install.html">Mac install (GTA SA)</a>
+        <button type="button" class="secondary" id="protoBtn">Enter browser walkthrough</button>
       </div>
     </div>
   </div>
 
-  <div id="hint">↑↓ walk · ←→ turn · Shift sprint · Mouse look · Esc release</div>
+  <div id="hint">↑ walk up the red carpet into the open gate · ←→ turn · Shift sprint · Esc release</div>
 
   <script>
   // ENTER opens the door chooser (GTA path primary). Prototype still available.
@@ -676,16 +676,17 @@
     }
 
     // ===== BASEMENT exterior courtyard — same concrete/brick language as the good tunnel =====
-    addBox(CX(0, 22), 0.04, CZ(-36, -3), W(0, 22), 0.08, W(-36, -3), mats.asphalt, { noShadow: true });
+    // Floors never collide — only walls/props block (floor AABBs were snagging legs on the ramp)
+    addBox(CX(0, 22), 0.04, CZ(-36, -3), W(0, 22), 0.08, W(-36, -3), mats.asphalt, { noCollide: true, noShadow: true });
     addBox(CX(-22, 44), 0.015, CZ(-55, 12), W(-22, 44), 0.03, W(-55, 12), mats.outdoor, { noCollide: true, noShadow: true });
 
     // Opaque brick/concrete courtyard walls (not the fence photo texture)
     addBox(X(-0.35), 2.2, CZ(-36, -3), 0.7, 4.4, W(-36, -3), mats.entrBrick);
     addBox(X(22.35), 2.2, CZ(-36, -3), 0.7, 4.4, W(-36, -3), mats.entrBrick);
     addBox(CX(0, 22), 2.2, Z(-36.35), W(0, 22), 4.4, 0.7, mats.entrBrick);
-    // Gate-line leaves only ramp opening (walkable center)
-    addBox(CX(0, RAMP_X0 - 0.45), 2.2, Z(RAMP_Z0), W(0, RAMP_X0 - 0.45), 4.4, 0.55, mats.entrConcrete);
-    addBox(CX(RAMP_X1 + 0.45, 22), 2.2, Z(RAMP_Z0), W(RAMP_X1 + 0.45, 22), 4.4, 0.55, mats.entrConcrete);
+    // Gate-line — wide center opening into the ramp (map X 6.4…13.6)
+    addBox(CX(0, RAMP_X0 - 0.8), 2.2, Z(RAMP_Z0), W(0, RAMP_X0 - 0.8), 4.4, 0.55, mats.entrConcrete);
+    addBox(CX(RAMP_X1 + 0.8, 22), 2.2, Z(RAMP_Z0), W(RAMP_X1 + 0.8, 22), 4.4, 0.55, mats.entrConcrete);
     // Steel pickets ON TOP of brick (visual only)
     function picketOnWall(mx0, mz0, mx1, mz1) {
       const x0 = X(mx0), z0 = Z(mz0), x1 = X(mx1), z1 = Z(mz1);
@@ -715,37 +716,38 @@
     addBox(X(2.2), 2.4, Z(-20), 0.12, 4.8, 0.12, mats.metal, { noCollide: true });
     glow(X(2.2), 4.7, Z(-20), 0xff8844, 4.5, 18);
 
-    // VIP red carpet — clear walk lane (no NPCs on the carpet center)
-    addBox(CX(15.5, 19.5), 0.07, CZ(-22, -4), W(15.5, 19.5), 0.04, W(-22, -4), mats.red, { noCollide: true, noShadow: true });
+    // Red carpet AIMED at the open gate (center ramp) — not the closed right wall
+    addBox(CX(RAMP_X0 + 0.6, RAMP_X1 - 0.6), 0.07, CZ(-24, -4), W(RAMP_X0 + 0.6, RAMP_X1 - 0.6), 0.04, W(-24, -4), mats.red, { noCollide: true, noShadow: true });
     for (let i = 0; i < 8; i++) {
-      const zz = -21 + i * 2.2;
-      addBox(X(15.3), 0.55, Z(zz), 0.12, 1.1, 0.12, mats.black);
-      addBox(X(19.7), 0.55, Z(zz), 0.12, 1.1, 0.12, mats.black);
+      const zz = -23 + i * 2.2;
+      addBox(X(RAMP_X0 + 0.5), 0.55, Z(zz), 0.12, 1.1, 0.12, mats.black, { noCollide: true });
+      addBox(X(RAMP_X1 - 0.5), 0.55, Z(zz), 0.12, 1.1, 0.12, mats.black, { noCollide: true });
     }
     {
       const gz = Z(RAMP_Z0);
       addBox(X((RAMP_X0 + RAMP_X1) / 2), 2.55, gz - 0.9, W(RAMP_X0 - 0.8, RAMP_X1 + 0.8), 0.08, 2.4, mats.speakerWhite, { noCollide: true });
-      addBox(X(RAMP_X0 - 0.6), 1.3, gz - 0.9, 0.12, 2.5, 0.12, mats.metal);
-      addBox(X(RAMP_X1 + 0.6), 1.3, gz - 0.9, 0.12, 2.5, 0.12, mats.metal);
+      addBox(X(RAMP_X0 - 0.9), 1.3, gz - 0.9, 0.12, 2.5, 0.12, mats.metal, { noCollide: true });
+      addBox(X(RAMP_X1 + 0.9), 1.3, gz - 0.9, 0.12, 2.5, 0.12, mats.metal, { noCollide: true });
     }
 
-    // Queue LEFT of the walk path — leave center X≈8.5–12 clear into the gate
-    for (let i = 0; i < 5; i++) {
-      addBox(X(3.8 + i * 0.85), 0.7, Z(-15), 0.1, 1.3, 0.1, mats.metal);
-      addBox(X(3.8 + i * 0.85), 0.7, Z(-8), 0.1, 1.3, 0.1, mats.metal);
+    // Queues OFF the carpet — leave the red lane empty into the gate
+    for (let i = 0; i < 4; i++) {
+      addBox(X(2.8 + i * 0.7), 0.7, Z(-16), 0.1, 1.3, 0.1, mats.metal, { noCollide: true });
+      addBox(X(2.8 + i * 0.7), 0.7, Z(-9), 0.1, 1.3, 0.1, mats.metal, { noCollide: true });
+      addBox(X(16.2 + i * 0.7), 0.7, Z(-16), 0.1, 1.3, 0.1, mats.metal, { noCollide: true });
+      addBox(X(16.2 + i * 0.7), 0.7, Z(-9), 0.1, 1.3, 0.1, mats.metal, { noCollide: true });
     }
-    spawnCrowd(X(5.2), Z(-11.5), 9, 'queue', 2.0, 5.5);
-    spawnCrowd(X(17.5), Z(-13), 6, 'queue', 1.3, 5.0);
-    // Side loiterers only — do not block the gate mouth
-    makeNPC(X(4.5), Z(-5.5), { mode: 'idle', color: 0x0c0c10, facing: 0.4, pants: 0x101018, coat: true });
-    makeNPC(X(14.5), Z(-6.0), { mode: 'idle', color: 0x1a1520, facing: -0.5, pants: 0x1c2a4a });
+    spawnCrowd(X(3.6), Z(-12), 6, 'queue', 1.4, 5.0);
+    spawnCrowd(X(17.8), Z(-12), 6, 'queue', 1.4, 5.0);
+    makeNPC(X(3.8), Z(-5.0), { mode: 'idle', color: 0x0c0c10, facing: 0.4, pants: 0x101018, coat: true });
+    makeNPC(X(16.8), Z(-5.2), { mode: 'idle', color: 0x1a1520, facing: -0.5, pants: 0x1c2a4a });
 
-    // Tall industrial gate into ramp
+    // Tall industrial gate into ramp (posts outside the walk lane)
     {
       const gz = Z(RAMP_Z0);
-      addBox(X(RAMP_X0 - 0.55), 2.5, gz, 0.32, 5.0, 0.32, mats.metal);
-      addBox(X(RAMP_X1 + 0.55), 2.5, gz, 0.32, 5.0, 0.32, mats.metal);
-      addBox(CX(RAMP_X0 - 0.55, RAMP_X1 + 0.55), 4.9, gz, W(RAMP_X0 - 0.55, RAMP_X1 + 0.55), 0.24, 0.32, mats.metal);
+      addBox(X(RAMP_X0 - 0.85), 2.5, gz, 0.32, 5.0, 0.32, mats.metal);
+      addBox(X(RAMP_X1 + 0.85), 2.5, gz, 0.32, 5.0, 0.32, mats.metal);
+      addBox(CX(RAMP_X0 - 0.85, RAMP_X1 + 0.85), 4.9, gz, W(RAMP_X0 - 0.85, RAMP_X1 + 0.85), 0.24, 0.32, mats.metal, { noCollide: true });
       for (let s = 0; s < 6; s++) {
         addBox(CX(RAMP_X0, RAMP_X1), 3.7 + s * 0.12, gz - 0.1, W(RAMP_X0, RAMP_X1), 0.08, 0.16, mats.metalHeavy, { noCollide: true });
       }
@@ -766,12 +768,12 @@
         const yTop = -RAMP_DROP * t0;
         const yBot = -RAMP_DROP * t1;
         const yMid = (yTop + yBot) / 2;
-        addBox(CX(RAMP_X0, RAMP_X1), yMid, CZ(mz0, mz1), W(RAMP_X0, RAMP_X1), Math.max(0.12, yTop - yBot + 0.08), W(mz0, mz1), mats.rampFloor, { noShadow: true });
+        addBox(CX(RAMP_X0, RAMP_X1), yMid, CZ(mz0, mz1), W(RAMP_X0, RAMP_X1), Math.max(0.12, yTop - yBot + 0.08), W(mz0, mz1), mats.rampFloor, { noCollide: true, noShadow: true });
         // Retaining walls — keep tops low enough to see sky + facade beyond (photo ramp)
         const wallH = 0.95 + RAMP_DROP * t1 * 0.55;
         const wallY = yBot + wallH / 2;
-        addBox(X(RAMP_X0), wallY, CZ(mz0, mz1), 0.35, wallH, W(mz0, mz1), mats.entrConcrete);
-        addBox(X(RAMP_X1), wallY, CZ(mz0, mz1), 0.35, wallH, W(mz0, mz1), mats.entrConcrete);
+        addBox(X(RAMP_X0 - 0.15), wallY, CZ(mz0, mz1), 0.35, wallH, W(mz0, mz1), mats.entrConcrete);
+        addBox(X(RAMP_X1 + 0.15), wallY, CZ(mz0, mz1), 0.35, wallH, W(mz0, mz1), mats.entrConcrete);
         // Handrails both sides
         const railY = yMid + 1.05;
         addBox(X(RAMP_X0 + 0.25), railY, CZ(mz0, mz1), 0.06, 0.06, W(mz0, mz1), mats.rustMetal, { noCollide: true });
@@ -786,7 +788,8 @@
     // Upper facade: industrial brick + Knockdown railing above tunnel mouth
     addBox(CX(0, RAMP_X0), 2.4, Z(TUN_Z0), W(0, RAMP_X0), 4.8, 0.5, mats.entrBrick);
     addBox(CX(RAMP_X1, 22), 2.4, Z(TUN_Z0), W(RAMP_X1, 22), 4.8, 0.5, mats.entrBrick);
-    addBox(CX(RAMP_X0, RAMP_X1), 3.6 - RAMP_DROP * 0.15, Z(TUN_Z0), W(RAMP_X0, RAMP_X1), 1.4, 0.4, mats.entrBrick);
+    // Lintel over the mouth — visual only (must not plug the tunnel)
+    addBox(CX(RAMP_X0, RAMP_X1), 3.6 - RAMP_DROP * 0.15, Z(TUN_Z0), W(RAMP_X0, RAMP_X1), 1.4, 0.4, mats.entrBrick, { noCollide: true });
     // Railing above tunnel mouth
     for (let i = 0; i < 6; i++) {
       addBox(X(RAMP_X0 + 0.4 + i * 0.9), 4.55, Z(TUN_Z0 - 0.15), 0.08, 0.7, 0.08, mats.rustMetal, { noCollide: true });
@@ -798,10 +801,10 @@
     {
       const floorY = -RAMP_DROP;
       const ceilY = floorY + 2.85;
-      addBox(CX(RAMP_X0, RAMP_X1), floorY + 0.05, CZ(TUN_Z0, TUN_Z1), W(RAMP_X0, RAMP_X1), 0.1, W(TUN_Z0, TUN_Z1), mats.rampFloor, { noShadow: true });
-      addBox(X(RAMP_X0), floorY + 1.4, CZ(TUN_Z0, TUN_Z1), 0.4, 2.8, W(TUN_Z0, TUN_Z1), mats.entrConcrete);
-      addBox(X(RAMP_X1), floorY + 1.4, CZ(TUN_Z0, TUN_Z1), 0.4, 2.8, W(TUN_Z0, TUN_Z1), mats.entrConcrete);
-      addBox(CX(RAMP_X0, RAMP_X1), ceilY, CZ(TUN_Z0, TUN_Z1), W(RAMP_X0, RAMP_X1), 0.18, W(TUN_Z0, TUN_Z1), mats.concreteDark, { noShadow: true });
+      addBox(CX(RAMP_X0, RAMP_X1), floorY + 0.05, CZ(TUN_Z0, TUN_Z1), W(RAMP_X0, RAMP_X1), 0.1, W(TUN_Z0, TUN_Z1), mats.rampFloor, { noCollide: true, noShadow: true });
+      addBox(X(RAMP_X0 - 0.15), floorY + 1.4, CZ(TUN_Z0, TUN_Z1), 0.4, 2.8, W(TUN_Z0, TUN_Z1), mats.entrConcrete);
+      addBox(X(RAMP_X1 + 0.15), floorY + 1.4, CZ(TUN_Z0, TUN_Z1), 0.4, 2.8, W(TUN_Z0, TUN_Z1), mats.entrConcrete);
+      addBox(CX(RAMP_X0, RAMP_X1), ceilY, CZ(TUN_Z0, TUN_Z1), W(RAMP_X0, RAMP_X1), 0.18, W(TUN_Z0, TUN_Z1), mats.concreteDark, { noCollide: true, noShadow: true });
       // Formwork seam ribs
       for (let i = 0; i < 4; i++) {
         const mz = TUN_Z0 + 1.5 + i * 1.8;
@@ -822,59 +825,62 @@
         const mz1 = RISE_Z0 + (RISE_Z1 - RISE_Z0) * t1;
         const y0 = -RAMP_DROP + RAMP_DROP * t0;
         const y1 = -RAMP_DROP + RAMP_DROP * t1;
-        addBox(CX(RAMP_X0, RAMP_X1), (y0 + y1) / 2, CZ(mz0, mz1), W(RAMP_X0, RAMP_X1), Math.max(0.12, Math.abs(y1 - y0) + 0.08), W(mz0, mz1), mats.brickFloor, { noShadow: true });
-        addBox(X(RAMP_X0), (y0 + y1) / 2 + 1.2, CZ(mz0, mz1), 0.35, 2.4, W(mz0, mz1), mats.brick);
-        addBox(X(RAMP_X1), (y0 + y1) / 2 + 1.2, CZ(mz0, mz1), 0.35, 2.4, W(mz0, mz1), mats.brick);
+        addBox(CX(RAMP_X0, RAMP_X1), (y0 + y1) / 2, CZ(mz0, mz1), W(RAMP_X0, RAMP_X1), Math.max(0.12, Math.abs(y1 - y0) + 0.08), W(mz0, mz1), mats.brickFloor, { noCollide: true, noShadow: true });
+        addBox(X(RAMP_X0 - 0.15), (y0 + y1) / 2 + 1.2, CZ(mz0, mz1), 0.35, 2.4, W(mz0, mz1), mats.brick);
+        addBox(X(RAMP_X1 + 0.15), (y0 + y1) / 2 + 1.2, CZ(mz0, mz1), 0.35, 2.4, W(mz0, mz1), mats.brick);
       }
     }
 
     // Club corridor after rise — opens into SECURITY CHECK-IN
-    addBox(CX(0, 25), 0.05, CZ(22, 30), W(0, 25), 0.1, W(22, 30), mats.brickFloor, { noShadow: true });
+    addBox(CX(0, 25), 0.05, CZ(22, 30), W(0, 25), 0.1, W(22, 30), mats.brickFloor, { noCollide: true, noShadow: true });
     addBox(X(0), 1.7, CZ(22, 30), 0.4, 3.4, W(22, 30), mats.brick);
-    addBox(CX(0, 25), 3.45, CZ(22, 30), W(0, 25), 0.12, W(22, 30), mats.concreteDark, { noShadow: true });
+    addBox(CX(0, 25), 3.45, CZ(22, 30), W(0, 25), 0.12, W(22, 30), mats.concreteDark, { noCollide: true, noShadow: true });
     glow(X(10), 2.0, Z(24), 0xff4422, 2.2, 10);
 
     // ===== SECURITY: ID + FASHION CHECK =====
-    // Check-in desk (arrivals walk from south / tunnel toward desk)
-    addBox(X(12), 0.55, Z(27.2), 4.2, 1.1, 1.15, mats.metalHeavy);
-    addBox(X(12), 1.18, Z(27.2), 4.4, 0.12, 1.25, mats.black); // desktop
-    addBox(X(10.2), 1.55, Z(26.7), 0.55, 0.45, 0.35, mats.metal, { noCollide: true }); // ID scanner block
-    addBox(X(13.8), 1.55, Z(26.7), 0.55, 0.45, 0.35, mats.metal, { noCollide: true });
-    // Red ID CHECK / FASHION boards
-    addBox(X(10.2), 2.35, Z(26.55), 1.8, 0.7, 0.08, mats.red, { noCollide: true });
-    addBox(X(13.8), 2.35, Z(26.55), 1.8, 0.7, 0.08, mats.red, { noCollide: true });
+    // Split desk — sizes are world meters; leave ≥1.2m aisle at map X≈10 (world 4.2)
+    addBox(X(6.5), 0.55, Z(27.2), 1.5, 1.1, 1.0, mats.metalHeavy);
+    addBox(X(17.5), 0.55, Z(27.2), 1.5, 1.1, 1.0, mats.metalHeavy);
+    addBox(X(6.5), 1.18, Z(27.2), 1.6, 0.12, 1.1, mats.black, { noCollide: true });
+    addBox(X(17.5), 1.18, Z(27.2), 1.6, 0.12, 1.1, mats.black, { noCollide: true });
+    addBox(X(6.5), 1.55, Z(26.7), 0.45, 0.4, 0.3, mats.metal, { noCollide: true });
+    addBox(X(17.5), 1.55, Z(26.7), 0.45, 0.4, 0.3, mats.metal, { noCollide: true });
+    addBox(X(6.5), 2.35, Z(26.55), 1.2, 0.65, 0.08, mats.red, { noCollide: true });
+    addBox(X(17.5), 2.35, Z(26.55), 1.2, 0.65, 0.08, mats.red, { noCollide: true });
     glow(X(12), 2.5, Z(26.2), 0xff2200, 2.4, 9);
-    // Queue ropes into the desk (leave center aisle open)
     for (let i = 0; i < 4; i++) {
-      addBox(X(8.2), 0.55, Z(23.2 + i * 0.85), 0.1, 1.1, 0.1, mats.black);
-      addBox(X(15.8), 0.55, Z(23.2 + i * 0.85), 0.1, 1.1, 0.1, mats.black);
+      addBox(X(5.2), 0.55, Z(23.2 + i * 0.85), 0.1, 1.1, 0.1, mats.black, { noCollide: true });
+      addBox(X(18.8), 0.55, Z(23.2 + i * 0.85), 0.1, 1.1, 0.1, mats.black, { noCollide: true });
     }
-    // Four bouncers at the desk (face arrivals)
-    makeNPC(X(9.4), Z(27.9), { mode: 'idle', color: 0x0a0a0e, facing: Math.PI, coat: true, pants: 0x101018 });
-    makeNPC(X(11.0), Z(28.1), { mode: 'idle', color: 0x0c0c10, facing: Math.PI, coat: true, pants: 0x101018 });
-    makeNPC(X(13.0), Z(28.1), { mode: 'idle', color: 0x0c0c10, facing: Math.PI, coat: true, pants: 0x101018 });
-    makeNPC(X(14.6), Z(27.9), { mode: 'idle', color: 0x0a0a0e, facing: Math.PI, coat: true, pants: 0x101018 });
-    // Guests waiting in rope lane (not blocking desk front)
-    spawnCrowd(X(10.2), Z(24.2), 4, 'queue', 1.5, 1.2);
+    makeNPC(X(5.8), Z(27.9), { mode: 'idle', color: 0x0a0a0e, facing: Math.PI, coat: true, pants: 0x101018 });
+    makeNPC(X(7.4), Z(28.2), { mode: 'idle', color: 0x0c0c10, facing: Math.PI, coat: true, pants: 0x101018 });
+    makeNPC(X(16.6), Z(28.2), { mode: 'idle', color: 0x0c0c10, facing: Math.PI, coat: true, pants: 0x101018 });
+    makeNPC(X(18.2), Z(27.9), { mode: 'idle', color: 0x0a0a0e, facing: Math.PI, coat: true, pants: 0x101018 });
+    spawnCrowd(X(5.5), Z(24.0), 3, 'queue', 1.0, 1.0);
+    spawnCrowd(X(18.5), Z(24.0), 3, 'queue', 1.0, 1.0);
 
     // North leg into hub
-    addBox(CX(15, 25), 0.05, CZ(20, 32), W(15, 25), 0.1, W(20, 32), mats.brickFloor, { noShadow: true });
-    addBox(X(15), 1.7, CZ(20, 32), 0.4, 3.4, W(20, 32), mats.brick);
+    addBox(CX(15, 25), 0.05, CZ(20, 32), W(15, 25), 0.1, W(20, 32), mats.brickFloor, { noCollide: true, noShadow: true });
+    // Doorway in the X=15 wall at security aisle (do not seal the check-in lane)
+    addBox(X(15), 1.7, CZ(20, 25.5), 0.4, 3.4, W(20, 25.5), mats.brick);
+    addBox(X(15), 1.7, CZ(28.5, 32), 0.4, 3.4, W(28.5, 32), mats.brick);
     addBox(X(25), 1.7, CZ(20, 28), 0.4, 3.4, W(20, 28), mats.brick);
-    addBox(CX(15, 25), 3.45, CZ(20, 32), W(15, 25), 0.12, W(20, 32), mats.concreteDark, { noShadow: true });
+    addBox(CX(15, 25), 3.45, CZ(20, 32), W(15, 25), 0.12, W(20, 32), mats.concreteDark, { noCollide: true, noShadow: true });
     glow(X(20), 2.0, Z(28), 0xff4422, 2.5, 10);
 
-    // Lockers 0-20, 25-45
-    addBox(CX(0, 20), 0.05, CZ(25, 45), W(0, 20), 0.1, W(25, 45), mats.brickFloor, { noShadow: true });
-    addBox(CX(0, 20), 1.6, Z(25), W(0, 20), 3.2, 0.4, mats.brick);
+    // Lockers 0-20, 25-45 — OPEN doorway on south wall into security / ramp lane
+    addBox(CX(0, 20), 0.05, CZ(25, 45), W(0, 20), 0.1, W(25, 45), mats.brickFloor, { noCollide: true, noShadow: true });
+    addBox(CX(0, 7.5), 1.6, Z(25), W(0, 7.5), 3.2, 0.4, mats.brick);
+    addBox(CX(14.5, 20), 1.6, Z(25), W(14.5, 20), 3.2, 0.4, mats.brick);
     addBox(CX(0, 20), 1.6, Z(45), W(0, 20), 3.2, 0.4, mats.brick);
     addBox(X(0), 1.6, CZ(25, 45), 0.4, 3.2, W(25, 45), mats.brick);
     addBox(X(20), 1.6, CZ(25, 32), 0.4, 3.2, W(25, 32), mats.brick);
     addBox(X(20), 1.6, CZ(38, 45), 0.4, 3.2, W(38, 45), mats.brick);
     addBox(CX(0, 20), 3.25, CZ(25, 45), W(0, 20), 0.1, W(25, 45), mats.concreteDark, { noShadow: true });
+    // Lockers along the sides — leave map X≈10 aisle clear from security into the room
     for (let row = 0; row < 2; row++) {
-      for (let col = 0; col < 5; col++) {
-        addBox(X(3 + col * 3), 0.85, Z(30 + row * 6), 1.0, 1.7, 0.7, mats.metalHeavy);
+      for (const mx of [3, 5.5, 14.5, 17]) {
+        addBox(X(mx), 0.85, Z(30 + row * 6), 1.0, 1.7, 0.7, mats.metalHeavy);
       }
     }
     addBox(X(14), 1.1, Z(40), 1.1, 2.1, 0.8, mats.metalHeavy); // snack (was flat MeshBasic orange)
@@ -1027,14 +1033,14 @@
     // Indoor west wall only (do not seal the outdoor courtyard into a black box)
     addBox(X(-1), 1.5, CZ(20, 100), 0.4, 3, W(20, 100), mats.brick);
 
-    // Spawn south of the queue — clear courtyard establishing shot toward the gate
+    // Spawn on the red carpet aimed at the open gate
     const player = {
-      pos: new THREE.Vector3(X(10), 0, Z(-28)),
+      pos: new THREE.Vector3(X(10), 0, Z(-18)),
       yaw: Math.PI, // face +Z (north) toward gate/ramp
-      pitch: 0.18,  // slight look-down for third-person
-      speed: 6.2,
-      turnSpeed: 3.4, // ←→ turns the view with the body
-      radius: 0.35,
+      pitch: 0.16,
+      speed: 6.8,
+      turnSpeed: 3.4,
+      radius: 0.28,
     };
 
     // Player avatar — same humanoid language as crowd (harness crew)

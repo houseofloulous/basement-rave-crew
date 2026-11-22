@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Install Basement — GTA San Andreas</title>
+  <title>Install Basement — Mac</title>
   <style>
     :root {
       --bg: #0a0809;
@@ -36,6 +36,13 @@
       font-size: clamp(1.4rem, 4vw, 2rem);
       margin: 0 0 0.5rem;
     }
+    h2 {
+      margin: 2rem 0 0.6rem;
+      font-size: 1rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #fff;
+    }
     .tag {
       color: var(--red);
       font-weight: 800;
@@ -45,10 +52,7 @@
       margin-bottom: 1rem;
     }
     p { color: var(--muted); }
-    ol {
-      padding-left: 1.2rem;
-      color: var(--fg);
-    }
+    ol { padding-left: 1.2rem; color: var(--fg); }
     li { margin: 0.75rem 0; }
     li strong { color: #fff; }
     .note {
@@ -73,23 +77,31 @@
 <body>
   <main>
     <a class="back" href="index.html">← Door</a>
-    <div class="tag">Mad Max Crew</div>
+    <div class="tag">Mad Max Crew · Mac</div>
     <h1>Install the real club</h1>
     <p>
-      Basement is being built as a <strong style="color:#fff">GTA: San Andreas</strong> map —
-      the same medium as the club recreations that actually look like Basement
-      (not the browser prototype).
+      No Windows PC needed. The club that matches the reference reel is a
+      <strong style="color:#fff">GTA: San Andreas</strong> map — on Mac you run SA inside
+      <strong style="color:#fff">CrossOver</strong> (Whisky is flakier).
     </p>
+
+    <h2>On your Mac</h2>
     <ol>
-      <li><strong>Get GTA: San Andreas</strong> on PC (Steam / classic). Use a copy you’re willing to mod.</li>
-      <li><strong>Install ModLoader</strong> (+ ASI loader) so packs drop in without nuking the base game.</li>
-      <li><strong>Install Ariane</strong> if you’re helping build the map (<a href="https://gtastuff.com/ariane/" target="_blank" rel="noopener">gtastuff.com/ariane</a>).</li>
-      <li>When the pack ships, copy <code>modloader/BasementRaveCrew/</code> into your game’s <code>modloader</code> folder and launch SA.</li>
+      <li><strong>Install CrossOver</strong> (CodeWeavers). Trial is fine to try the game.</li>
+      <li><strong>Install Steam inside CrossOver</strong>, then buy/install <strong>GTA: San Andreas</strong>.</li>
+      <li><strong>Downgrade to SA v1.0</strong> + SilentPatch + ASI loader + <strong>ModLoader</strong> (same stack Mac gamers use for classic SA).</li>
+      <li>When our pack ships, drop <code>modloader/BasementRaveCrew/</code> into the game’s <code>modloader</code> folder and launch from Steam in CrossOver.</li>
     </ol>
+
+    <h2>Building the map</h2>
+    <p>
+      Map editing uses <a href="https://gtastuff.com/ariane/" target="_blank" rel="noopener">Ariane</a> against that same SA install.
+      Layout + crew roster live in <code>gta-sa-mod/</code> on GitHub while the pack is scaffold-only.
+    </p>
+
     <div class="note">
-      Pack status: scaffold only — layout + character roster are in
-      <code>gta-sa-mod/</code> on GitHub. We need one Windows PC with SA to block out the courtyard in Ariane next.
-      Full notes: <a href="BUILD-PIVOT.md">BUILD-PIVOT.md</a>
+      The browser walkthrough is a temporary prototype — use it to poke around until the Mac SA pack is playable.
+      Details: <a href="BUILD-PIVOT.md">BUILD-PIVOT.md</a>
     </div>
   </main>
 </body>

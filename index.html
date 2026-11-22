@@ -565,7 +565,7 @@
     // Side sheds beyond fences
     addBox(X(-9), 2.6, CZ(-30, -10), 5, 5.2, W(-30, -10), mats.rustMetal, { noCollide: true });
     addBox(X(31), 2.8, CZ(-32, -8), 6, 5.6, W(-32, -8), mats.entrBrick, { noCollide: true });
-    wallPanel('textures-real/entrance-gate-courtyard.png', X(-8.5), 3.1, Z(-18), 6.8, 4.0, Math.PI / 2);
+    // (No giant wallPanel billboards beside the yard — they clip the camera into “beyond reality”)
 
     // Orange streetlamp (photo courtyard night)
     addBox(X(2.2), 2.4, Z(-20), 0.12, 4.8, 0.12, mats.metalHeavy, { noCollide: true });
@@ -606,7 +606,8 @@
       for (let s = 0; s < 6; s++) {
         addBox(CX(RAMP_X0, RAMP_X1), 3.7 + s * 0.12, gz - 0.1, W(RAMP_X0, RAMP_X1), 0.08, 0.16, mats.metal, { noCollide: true });
       }
-      wallPanel('textures-real/entrance-ramp-photo.jpg', X((RAMP_X0 + RAMP_X1) / 2), 5.8, Z(TUN_Z0 - 0.4), 5.4, 2.5, 0);
+      // Facade signage as solid brick (photo panel removed — was clipping outside cam)
+      addBox(X((RAMP_X0 + RAMP_X1) / 2), 5.5, Z(TUN_Z0 - 0.25), W(RAMP_X0, RAMP_X1), 1.4, 0.2, mats.entrBrick, { noCollide: true });
     }
 
     // Soft clamp — never leave the courtyard/club playable volume
@@ -872,9 +873,9 @@
     const player = {
       pos: new THREE.Vector3(X(8.5), 0, Z(-22)),
       yaw: Math.PI, // face +Z (north) toward gate/ramp
-      pitch: 0.18,  // slight look-down for third-person
+      pitch: 0.12,  // slight look-down for third-person
       speed: 6.2,
-      turnSpeed: 2.4,
+      turnSpeed: 3.4, // ←→ turns the view with the body
       radius: 0.35,
     };
 
@@ -1001,20 +1002,36 @@
       const gy = groundY(player.pos.x, player.pos.z);
       player.pos.y = gy;
       avatar.position.set(player.pos.x, gy, player.pos.z);
-      avatar.rotation.y = player.yaw;
+      // Mesh faces +Z; walk forward is (-sin yaw, -cos yaw) → offset body by π so turn = face = view
+      avatar.rotation.y = player.yaw + Math.PI;
 
-      // Third-person follow cam — farther/higher so courtyard + gate read immersively
-      const camDist = 6.4;
-      const camHeight = 3.15 + player.pitch * 1.25;
-      const camX = player.pos.x + Math.sin(player.yaw) * camDist;
-      const camZ = player.pos.z + Math.cos(player.yaw) * camDist;
-      const camZClamped = Math.max(camZ, Z(-42));
-      const camY = gy + camHeight;
-      camera.position.set(camX, camY, camZClamped);
+      // Third-person cam stays INSIDE the yard and yaws with ←→ / mouse (no outside “void” view)
+      const camPad = 1.05;
+      const camMinX = playMinX + camPad, camMaxX = playMaxX - camPad;
+      const camMinZ = playMinZ + camPad;
+      let dist = 3.6;
+      let camX = player.pos.x, camY = gy + 2.55 + player.pitch * 0.85, camZ = player.pos.z;
+      for (let i = 0; i < 10; i++) {
+        camX = player.pos.x + Math.sin(player.yaw) * dist;
+        camZ = player.pos.z + Math.cos(player.yaw) * dist;
+        camY = gy + 2.35 + player.pitch * 0.9;
+        if (camX >= camMinX && camX <= camMaxX && camZ >= camMinZ) break;
+        dist *= 0.68;
+      }
+      camX = Math.max(camMinX, Math.min(camMaxX, camX));
+      camZ = Math.max(camMinZ, camZ);
+      // Never let the follow cam sit south of the player into the void
+      if (dist < 1.1) {
+        camX = player.pos.x + Math.sin(player.yaw) * 1.1;
+        camZ = player.pos.z + Math.cos(player.yaw) * 1.1;
+        camX = Math.max(camMinX, Math.min(camMaxX, camX));
+        camZ = Math.max(camMinZ, camZ);
+      }
+      camera.position.set(camX, camY, camZ);
       camera.lookAt(
-        player.pos.x - Math.sin(player.yaw) * 4.2,
-        gy + 1.25,
-        player.pos.z - Math.cos(player.yaw) * 4.2
+        player.pos.x - Math.sin(player.yaw) * 2.8,
+        gy + 1.4,
+        player.pos.z - Math.cos(player.yaw) * 2.8
       );
 
       renderer.render(scene, camera);

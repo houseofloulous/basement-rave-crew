@@ -199,7 +199,8 @@
     applyMap(mats.entrConcrete, 'textures-real/entrance-concrete.jpg', [2, 3]);
     applyMap(mats.rampFloor, 'textures-real/entrance-ramp-floor.jpg', [3, 6]);
     applyMap(mats.entrBrick, 'textures-real/entrance-yard-brick.jpg', [2.5, 2.5]);
-    applyMap(mats.rustMetal, 'textures-real/entrance-rust-metal.jpg', [2, 2]);
+    // Do NOT map the blurry outdoor fence photo onto rustMetal — that made courtyard walls look fake
+    mats.rustMetal.color.set(0x4a3828);
     applyMap(mats.bathTile, 'textures-real/bath-tile.jpg', [3, 3]);
     applyMap(mats.metalHeavy, 'textures-real/metal-heavy.jpg', [2, 2]);
     applyMap(mats.graffiti, 'GraffitiMadMax.png', null);
@@ -337,75 +338,82 @@
     // Floating room labels removed — players discover the floorplan.
     function makeLabel(_text, _x, _y, _z, _scale) { return null; }
 
-    /** Rounded club humanoid (capsule limbs — less Lego than boxes). */
+    /** Club humanoid — shoulders/jacket/boots; still stylized, less toy-brick. */
     function makeHumanoid(opts = {}) {
       const g = new THREE.Group();
-      const scale = opts.scale != null ? opts.scale : 0.94 + Math.random() * 0.14;
+      const scale = opts.scale != null ? opts.scale : 0.96 + Math.random() * 0.1;
       g.scale.setScalar(scale);
       const outfit = opts.color != null ? opts.color : 0x121216;
-      const pantsCol = opts.pants != null ? opts.pants : (Math.random() < 0.45 ? 0x1c2a4a : 0x141418);
+      const pantsCol = opts.pants != null ? opts.pants : (Math.random() < 0.5 ? 0x1a2744 : 0x15151a);
       const skinTone = opts.skin != null ? opts.skin : [0xb08a70, 0x8d6a55, 0xc4a07e, 0x6b4a38][(Math.random() * 4) | 0];
-      const hairCol = opts.hair != null ? opts.hair : [0x1a1a1a, 0xd8c48a, 0x2a1810, 0x44444a][(Math.random() * 4) | 0];
+      const hairCol = opts.hair != null ? opts.hair : [0x1a1a1a, 0xd8c48a, 0x2a1810, 0x55555c][(Math.random() * 4) | 0];
       const cloth = new THREE.MeshLambertMaterial({ color: outfit });
       const pantsM = new THREE.MeshLambertMaterial({ color: pantsCol });
       const skinM = new THREE.MeshLambertMaterial({ color: skinTone });
       const hairM = new THREE.MeshLambertMaterial({ color: hairCol });
       const accent = opts.accent != null ? opts.accent : 0xe10600;
       const Cap = THREE.CapsuleGeometry
-        ? (r, len) => new THREE.CapsuleGeometry(r, len, 3, 8)
-        : (r, len) => new THREE.CylinderGeometry(r, r, len + r * 2, 8);
+        ? (r, len) => new THREE.CapsuleGeometry(r, len, 4, 10)
+        : (r, len) => new THREE.CylinderGeometry(r, r, len + r * 2, 10);
 
-      const hips = new THREE.Mesh(Cap(0.16, 0.12), pantsM);
-      hips.position.y = 0.92;
-      const torso = new THREE.Mesh(Cap(0.2, 0.38), cloth);
-      torso.position.y = 1.28;
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), skinM);
-      head.position.y = 1.74;
-      const hair = new THREE.Mesh(new THREE.SphereGeometry(0.155, 10, 8), hairM);
-      hair.position.y = 1.82;
-      hair.scale.set(1.05, 0.7, 1.05);
-      if (opts.spiky) {
-        for (let i = 0; i < 5; i++) {
-          const spike = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.16, 5), hairM);
-          const a = (i / 5) * Math.PI * 2;
-          spike.position.set(Math.cos(a) * 0.06, 1.92, Math.sin(a) * 0.06);
+      const hips = new THREE.Mesh(Cap(0.17, 0.14), pantsM);
+      hips.position.y = 0.9;
+      const torso = new THREE.Mesh(Cap(0.19, 0.42), cloth);
+      torso.position.y = 1.3;
+      const chest = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 8), cloth);
+      chest.position.set(0, 1.42, 0.02);
+      chest.scale.set(1.15, 0.7, 0.85);
+      const shoulderL = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), cloth);
+      shoulderL.position.set(-0.24, 1.48, 0);
+      const shoulderR = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), cloth);
+      shoulderR.position.set(0.24, 1.48, 0);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10), skinM);
+      head.position.y = 1.78;
+      const hair = new THREE.Mesh(new THREE.SphereGeometry(0.145, 12, 10), hairM);
+      hair.position.y = 1.86;
+      hair.scale.set(1.08, 0.65, 1.08);
+      if (opts.spiky || Math.random() < 0.35) {
+        for (let i = 0; i < 6; i++) {
+          const spike = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.14, 5), hairM);
+          const a = (i / 6) * Math.PI * 2;
+          spike.position.set(Math.cos(a) * 0.07, 1.95, Math.sin(a) * 0.05);
           g.add(spike);
         }
       }
-      const neck = new THREE.Mesh(Cap(0.06, 0.06), skinM);
-      neck.position.y = 1.56;
+      const neck = new THREE.Mesh(Cap(0.055, 0.07), skinM);
+      neck.position.y = 1.58;
 
-      const legL = new THREE.Mesh(Cap(0.07, 0.42), pantsM);
-      legL.position.set(-0.1, 0.58, 0);
-      const legR = new THREE.Mesh(Cap(0.07, 0.42), pantsM);
-      legR.position.set(0.1, 0.58, 0);
-      const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.09, 0.24), mats.black);
-      shoeL.position.set(-0.1, 0.22, 0.03);
-      const shoeR = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.09, 0.24), mats.black);
-      shoeR.position.set(0.1, 0.22, 0.03);
+      const legL = new THREE.Mesh(Cap(0.075, 0.4), pantsM);
+      legL.position.set(-0.1, 0.55, 0);
+      const legR = new THREE.Mesh(Cap(0.075, 0.4), pantsM);
+      legR.position.set(0.1, 0.55, 0);
+      const bootL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.16, 0.28), mats.black);
+      bootL.position.set(-0.1, 0.2, 0.04);
+      const bootR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.16, 0.28), mats.black);
+      bootR.position.set(0.1, 0.2, 0.04);
 
-      const armL = new THREE.Mesh(Cap(0.055, 0.38), skinM);
-      armL.position.set(-0.28, 1.22, 0);
-      armL.rotation.z = 0.18;
-      const armR = new THREE.Mesh(Cap(0.055, 0.38), skinM);
-      armR.position.set(0.28, 1.22, 0);
-      armR.rotation.z = -0.18;
+      const armL = new THREE.Mesh(Cap(0.05, 0.4), skinM);
+      armL.position.set(-0.3, 1.2, 0);
+      armL.rotation.z = 0.2;
+      const armR = new THREE.Mesh(Cap(0.05, 0.4), skinM);
+      armR.position.set(0.3, 1.2, 0);
+      armR.rotation.z = -0.2;
 
-      const strapL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.5, 0.035), new THREE.MeshLambertMaterial({ color: accent }));
-      strapL.position.set(-0.09, 1.3, 0.13);
-      strapL.rotation.z = 0.32;
-      const strapR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.5, 0.035), new THREE.MeshLambertMaterial({ color: accent }));
-      strapR.position.set(0.09, 1.3, 0.13);
-      strapR.rotation.z = -0.32;
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.015, 6, 10), mats.metal);
-      ring.position.set(0, 1.16, 0.15);
+      const strapL = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.48, 0.03), new THREE.MeshLambertMaterial({ color: accent }));
+      strapL.position.set(-0.08, 1.32, 0.14);
+      strapL.rotation.z = 0.3;
+      const strapR = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.48, 0.03), new THREE.MeshLambertMaterial({ color: accent }));
+      strapR.position.set(0.08, 1.32, 0.14);
+      strapR.rotation.z = -0.3;
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.014, 6, 12), mats.metal);
+      ring.position.set(0, 1.18, 0.16);
       ring.rotation.x = Math.PI / 2;
 
-      g.add(hips, torso, head, hair, neck, legL, legR, shoeL, shoeR, armL, armR, strapL, strapR, ring);
-      if (opts.coat) {
-        const coat = new THREE.Mesh(Cap(0.24, 0.55), new THREE.MeshLambertMaterial({ color: 0x0a0a0c }));
-        coat.position.set(0, 1.2, -0.02);
-        coat.scale.set(1.15, 1, 0.85);
+      g.add(hips, torso, chest, shoulderL, shoulderR, head, hair, neck, legL, legR, bootL, bootR, armL, armR, strapL, strapR, ring);
+      if (opts.coat || Math.random() < 0.2) {
+        const coat = new THREE.Mesh(Cap(0.26, 0.62), new THREE.MeshLambertMaterial({ color: 0x0a0a0c }));
+        coat.position.set(0, 1.18, -0.02);
+        coat.scale.set(1.2, 1, 0.9);
         g.add(coat);
       }
       g.userData.torso = torso;
@@ -516,69 +524,53 @@
       return 0;
     }
 
-    // ===== BASEMENT exterior courtyard (GTA-ref: brick warehouse night + VIP line) =====
+    // ===== BASEMENT exterior courtyard — same concrete/brick language as the good tunnel =====
     addBox(CX(0, 22), 0.04, CZ(-36, -3), W(0, 22), 0.08, W(-36, -3), mats.asphalt, { noShadow: true });
-    // Ground beyond fences (visible, not walkable)
     addBox(CX(-22, 44), 0.015, CZ(-55, 12), W(-22, 44), 0.03, W(-55, 12), mats.outdoor, { noCollide: true, noShadow: true });
 
-    // Solid playable bounds — stop walking through / past the yard
-    // Thick collision slabs along perimeter (fence visuals sit on top)
-    addBox(X(-0.2), 1.5, CZ(-36, -3), 0.55, 3.0, W(-36, -3), mats.rustMetal);
-    addBox(X(22.2), 1.5, CZ(-36, -3), 0.55, 3.0, W(-36, -3), mats.rustMetal);
-    addBox(CX(0, 22), 1.5, Z(-36.2), W(0, 22), 3.0, 0.55, mats.rustMetal);
-    // Gate-line walls leave only ramp opening
-    addBox(CX(0, RAMP_X0 - 0.35), 1.6, Z(RAMP_Z0), W(0, RAMP_X0 - 0.35), 3.2, 0.45, mats.rustMetal);
-    addBox(CX(RAMP_X1 + 0.35, 22), 1.6, Z(RAMP_Z0), W(RAMP_X1 + 0.35, 22), 3.2, 0.45, mats.rustMetal);
-
-    // See-through picket visuals (collision already from slabs above)
-    function picketFence(mx0, mz0, mx1, mz1, spacing = 0.45) {
+    // Opaque brick/concrete courtyard walls (not the fence photo texture)
+    addBox(X(-0.35), 2.2, CZ(-36, -3), 0.7, 4.4, W(-36, -3), mats.entrBrick);
+    addBox(X(22.35), 2.2, CZ(-36, -3), 0.7, 4.4, W(-36, -3), mats.entrBrick);
+    addBox(CX(0, 22), 2.2, Z(-36.35), W(0, 22), 4.4, 0.7, mats.entrBrick);
+    // Gate-line leaves only ramp opening (walkable center)
+    addBox(CX(0, RAMP_X0 - 0.45), 2.2, Z(RAMP_Z0), W(0, RAMP_X0 - 0.45), 4.4, 0.55, mats.entrConcrete);
+    addBox(CX(RAMP_X1 + 0.45, 22), 2.2, Z(RAMP_Z0), W(RAMP_X1 + 0.45, 22), 4.4, 0.55, mats.entrConcrete);
+    // Steel pickets ON TOP of brick (visual only)
+    function picketOnWall(mx0, mz0, mx1, mz1) {
       const x0 = X(mx0), z0 = Z(mz0), x1 = X(mx1), z1 = Z(mz1);
-      const dx = x1 - x0, dz = z1 - z0;
-      const len = Math.hypot(dx, dz) || 1;
-      const n = Math.max(2, Math.floor(len / (spacing * S * 2.0)));
+      const dx = x1 - x0, dz = z1 - z0, len = Math.hypot(dx, dz) || 1;
+      const n = Math.max(2, Math.floor(len / 0.45));
       for (let i = 0; i <= n; i++) {
         const t = i / n;
-        const px = x0 + dx * t, pz = z0 + dz * t;
-        addBox(px, 1.4, pz, 0.06, 2.8, 0.06, mats.metalHeavy, { noCollide: true, noShadow: true });
-        addBox(px, 2.85, pz, 0.04, 0.16, 0.04, mats.metalHeavy, { noCollide: true, noShadow: true });
+        addBox(x0 + dx * t, 4.55, z0 + dz * t, 0.05, 0.7, 0.05, mats.metal, { noCollide: true, noShadow: true });
       }
-      const midX = (x0 + x1) / 2, midZ = (z0 + z1) / 2;
-      const railW = Math.abs(dx) > Math.abs(dz) ? len : 0.07;
-      const railD = Math.abs(dz) >= Math.abs(dx) ? len : 0.07;
-      addBox(midX, 2.6, midZ, railW, 0.05, railD, mats.metalHeavy, { noCollide: true });
-      addBox(midX, 1.2, midZ, railW, 0.05, railD, mats.metalHeavy, { noCollide: true });
     }
-    picketFence(-0.5, -36, -0.5, -3.2);
-    picketFence(22.5, -36, 22.5, -3.2);
-    picketFence(0, -36, 22, -36);
+    picketOnWall(-0.35, -36, -0.35, -3.2);
+    picketOnWall(22.35, -36, 22.35, -3.2);
+    picketOnWall(0, -36.35, 22, -36.35);
 
-    // Night warehouse mass beyond fence (Basement / Knockdown brick hall + chimneys)
+    // Warehouse beyond gate (brick + chimneys + window glow)
     addBox(X(11), 5.2, Z(8), 18, 10.4, 5.5, mats.entrBrick, { noCollide: true });
-    addBox(X(11), 10.6, Z(8), 18.5, 0.35, 6.0, mats.metalHeavy, { noCollide: true }); // roof lip
+    addBox(X(11), 10.6, Z(8), 18.5, 0.35, 6.0, mats.metalHeavy, { noCollide: true });
     addBox(X(5), 9.5, Z(7.2), 1.35, 8.5, 1.35, mats.brick, { noCollide: true });
     addBox(X(17), 10.2, Z(7.5), 1.15, 9.5, 1.15, mats.entrBrick, { noCollide: true });
-    // Warm window glows on facade
     for (let i = 0; i < 5; i++) {
       addBox(X(3 + i * 3.2), 3.4, Z(5.2), 1.1, 1.3, 0.12, mats.orangeE, { noCollide: true, noShadow: true });
       glow(X(3 + i * 3.2), 3.4, Z(4.6), 0xff8844, 1.2, 8);
     }
-    // Side sheds beyond fences
-    addBox(X(-9), 2.6, CZ(-30, -10), 5, 5.2, W(-30, -10), mats.rustMetal, { noCollide: true });
+    addBox(X(-9), 2.6, CZ(-30, -10), 5, 5.2, W(-30, -10), mats.entrConcrete, { noCollide: true });
     addBox(X(31), 2.8, CZ(-32, -8), 6, 5.6, W(-32, -8), mats.entrBrick, { noCollide: true });
-    // (No giant wallPanel billboards beside the yard — they clip the camera into “beyond reality”)
 
-    // Orange streetlamp (photo courtyard night)
-    addBox(X(2.2), 2.4, Z(-20), 0.12, 4.8, 0.12, mats.metalHeavy, { noCollide: true });
+    addBox(X(2.2), 2.4, Z(-20), 0.12, 4.8, 0.12, mats.metal, { noCollide: true });
     glow(X(2.2), 4.7, Z(-20), 0xff8844, 4.5, 18);
 
-    // VIP red carpet + stanchions toward entrance (Basement exterior ref)
+    // VIP red carpet — clear walk lane (no NPCs on the carpet center)
     addBox(CX(15.5, 19.5), 0.07, CZ(-22, -4), W(15.5, 19.5), 0.04, W(-22, -4), mats.red, { noCollide: true, noShadow: true });
     for (let i = 0; i < 8; i++) {
       const zz = -21 + i * 2.2;
       addBox(X(15.3), 0.55, Z(zz), 0.12, 1.1, 0.12, mats.black);
       addBox(X(19.7), 0.55, Z(zz), 0.12, 1.1, 0.12, mats.black);
     }
-    // White entrance tent / canopy at gate
     {
       const gz = Z(RAMP_Z0);
       addBox(X((RAMP_X0 + RAMP_X1) / 2), 2.55, gz - 0.9, W(RAMP_X0 - 0.8, RAMP_X1 + 0.8), 0.08, 2.4, mats.speakerWhite, { noCollide: true });
@@ -586,27 +578,26 @@
       addBox(X(RAMP_X1 + 0.6), 1.3, gz - 0.9, 0.12, 2.5, 0.12, mats.metal);
     }
 
-    // Queue line on carpet + barricade queue toward ramp
-    for (let i = 0; i < 6; i++) {
-      addBox(X(5.2 + i * 1.1), 0.7, Z(-14), 0.1, 1.3, 0.1, mats.rustMetal);
-      addBox(X(5.2 + i * 1.1), 0.7, Z(-7.5), 0.1, 1.3, 0.1, mats.rustMetal);
+    // Queue LEFT of the walk path — leave center X≈8.5–12 clear into the gate
+    for (let i = 0; i < 5; i++) {
+      addBox(X(3.8 + i * 0.85), 0.7, Z(-15), 0.1, 1.3, 0.1, mats.metal);
+      addBox(X(3.8 + i * 0.85), 0.7, Z(-8), 0.1, 1.3, 0.1, mats.metal);
     }
-    spawnCrowd(X(8.5), Z(-10), 14, 'queue', 3.6, 4.0);
-    spawnCrowd(X(17.5), Z(-12), 8, 'queue', 1.6, 5.5);
-    for (let i = 0; i < 4; i++) {
-      makeNPC(X(8.0 + i * 0.95), Z(-4.5), { mode: 'idle', color: 0x0c0c10, facing: Math.PI, pants: 0x101018 });
-    }
+    spawnCrowd(X(5.2), Z(-11.5), 9, 'queue', 2.0, 5.5);
+    spawnCrowd(X(17.5), Z(-13), 6, 'queue', 1.3, 5.0);
+    // Side loiterers only — do not block the gate mouth
+    makeNPC(X(4.5), Z(-5.5), { mode: 'idle', color: 0x0c0c10, facing: 0.4, pants: 0x101018, coat: true });
+    makeNPC(X(14.5), Z(-6.0), { mode: 'idle', color: 0x1a1520, facing: -0.5, pants: 0x1c2a4a });
 
-    // Tall industrial gate into ramp (Knockdown steel portal)
+    // Tall industrial gate into ramp
     {
       const gz = Z(RAMP_Z0);
-      addBox(X(RAMP_X0 - 0.55), 2.5, gz, 0.32, 5.0, 0.32, mats.rustMetal);
-      addBox(X(RAMP_X1 + 0.55), 2.5, gz, 0.32, 5.0, 0.32, mats.rustMetal);
-      addBox(CX(RAMP_X0 - 0.55, RAMP_X1 + 0.55), 4.9, gz, W(RAMP_X0 - 0.55, RAMP_X1 + 0.55), 0.24, 0.32, mats.rustMetal);
+      addBox(X(RAMP_X0 - 0.55), 2.5, gz, 0.32, 5.0, 0.32, mats.metal);
+      addBox(X(RAMP_X1 + 0.55), 2.5, gz, 0.32, 5.0, 0.32, mats.metal);
+      addBox(CX(RAMP_X0 - 0.55, RAMP_X1 + 0.55), 4.9, gz, W(RAMP_X0 - 0.55, RAMP_X1 + 0.55), 0.24, 0.32, mats.metal);
       for (let s = 0; s < 6; s++) {
-        addBox(CX(RAMP_X0, RAMP_X1), 3.7 + s * 0.12, gz - 0.1, W(RAMP_X0, RAMP_X1), 0.08, 0.16, mats.metal, { noCollide: true });
+        addBox(CX(RAMP_X0, RAMP_X1), 3.7 + s * 0.12, gz - 0.1, W(RAMP_X0, RAMP_X1), 0.08, 0.16, mats.metalHeavy, { noCollide: true });
       }
-      // Facade signage as solid brick (photo panel removed — was clipping outside cam)
       addBox(X((RAMP_X0 + RAMP_X1) / 2), 5.5, Z(TUN_Z0 - 0.25), W(RAMP_X0, RAMP_X1), 1.4, 0.2, mats.entrBrick, { noCollide: true });
     }
 
@@ -686,18 +677,34 @@
       }
     }
 
-    // Club corridor after rise (was eastbound entrance hall) — map 0-20, 20-25 bridge
-    addBox(CX(0, 20), 0.05, CZ(22, 25), W(0, 20), 0.1, W(22, 25), mats.brickFloor, { noShadow: true });
-    addBox(X(0), 1.7, CZ(22, 25), 0.4, 3.4, W(22, 25), mats.brick);
-    addBox(CX(0, 20), 3.45, CZ(22, 25), W(0, 20), 0.12, W(22, 25), mats.concreteDark, { noShadow: true });
-    glow(X(10), 2.0, Z(23.5), 0xff4422, 2.0, 8);
+    // Club corridor after rise — opens into SECURITY CHECK-IN
+    addBox(CX(0, 25), 0.05, CZ(22, 30), W(0, 25), 0.1, W(22, 30), mats.brickFloor, { noShadow: true });
+    addBox(X(0), 1.7, CZ(22, 30), 0.4, 3.4, W(22, 30), mats.brick);
+    addBox(CX(0, 25), 3.45, CZ(22, 30), W(0, 25), 0.12, W(22, 30), mats.concreteDark, { noShadow: true });
+    glow(X(10), 2.0, Z(24), 0xff4422, 2.2, 10);
 
-    // ID / dress-code rails (after tunnel, before hub) — no floating labels
-    addBox(X(18), 0.9, Z(25), 0.15, 1.6, 2.2, mats.metal);
-    addBox(X(20), 0.9, Z(25), 0.15, 1.6, 2.2, mats.metal);
-    addBox(X(22), 0.9, Z(25), 0.15, 1.6, 2.2, mats.metal);
-    glow(X(20), 2.2, Z(25), 0xff2222, 2, 8);
-    for (let i = 0; i < 4; i++) makeNPC(X(16 + i * 0.9), Z(23.5), { mode: 'idle', color: 0x0c0c10, facing: Math.PI });
+    // ===== SECURITY: ID + FASHION CHECK =====
+    // Check-in desk (arrivals walk from south / tunnel toward desk)
+    addBox(X(12), 0.55, Z(27.2), 4.2, 1.1, 1.15, mats.metalHeavy);
+    addBox(X(12), 1.18, Z(27.2), 4.4, 0.12, 1.25, mats.black); // desktop
+    addBox(X(10.2), 1.55, Z(26.7), 0.55, 0.45, 0.35, mats.metal, { noCollide: true }); // ID scanner block
+    addBox(X(13.8), 1.55, Z(26.7), 0.55, 0.45, 0.35, mats.metal, { noCollide: true });
+    // Red ID CHECK / FASHION boards
+    addBox(X(10.2), 2.35, Z(26.55), 1.8, 0.7, 0.08, mats.red, { noCollide: true });
+    addBox(X(13.8), 2.35, Z(26.55), 1.8, 0.7, 0.08, mats.red, { noCollide: true });
+    glow(X(12), 2.5, Z(26.2), 0xff2200, 2.4, 9);
+    // Queue ropes into the desk (leave center aisle open)
+    for (let i = 0; i < 4; i++) {
+      addBox(X(8.2), 0.55, Z(23.2 + i * 0.85), 0.1, 1.1, 0.1, mats.black);
+      addBox(X(15.8), 0.55, Z(23.2 + i * 0.85), 0.1, 1.1, 0.1, mats.black);
+    }
+    // Four bouncers at the desk (face arrivals)
+    makeNPC(X(9.4), Z(27.9), { mode: 'idle', color: 0x0a0a0e, facing: Math.PI, coat: true, pants: 0x101018 });
+    makeNPC(X(11.0), Z(28.1), { mode: 'idle', color: 0x0c0c10, facing: Math.PI, coat: true, pants: 0x101018 });
+    makeNPC(X(13.0), Z(28.1), { mode: 'idle', color: 0x0c0c10, facing: Math.PI, coat: true, pants: 0x101018 });
+    makeNPC(X(14.6), Z(27.9), { mode: 'idle', color: 0x0a0a0e, facing: Math.PI, coat: true, pants: 0x101018 });
+    // Guests waiting in rope lane (not blocking desk front)
+    spawnCrowd(X(10.2), Z(24.2), 4, 'queue', 1.5, 1.2);
 
     // North leg into hub
     addBox(CX(15, 25), 0.05, CZ(20, 32), W(15, 25), 0.1, W(20, 32), mats.brickFloor, { noShadow: true });
@@ -1005,33 +1012,47 @@
       // Mesh faces +Z; walk forward is (-sin yaw, -cos yaw) → offset body by π so turn = face = view
       avatar.rotation.y = player.yaw + Math.PI;
 
-      // Third-person cam stays INSIDE the yard and yaws with ←→ / mouse (no outside “void” view)
-      const camPad = 1.05;
+      // Third-person cam: stay in bounds AND pull in before hitting walls (no clip-through)
+      function camHitsWall(x, y, z) {
+        const r = 0.45;
+        for (const b of colliders) {
+          if (y < b.min.y - 0.2 || y > b.max.y + 0.35) continue;
+          const cx = Math.max(b.min.x, Math.min(x, b.max.x));
+          const cz = Math.max(b.min.z, Math.min(z, b.max.z));
+          const dx = x - cx, dz = z - cz;
+          if (dx * dx + dz * dz < r * r) return true;
+        }
+        return false;
+      }
+      const camPad = 0.9;
       const camMinX = playMinX + camPad, camMaxX = playMaxX - camPad;
       const camMinZ = playMinZ + camPad;
-      let dist = 3.6;
-      let camX = player.pos.x, camY = gy + 2.55 + player.pitch * 0.85, camZ = player.pos.z;
-      for (let i = 0; i < 10; i++) {
-        camX = player.pos.x + Math.sin(player.yaw) * dist;
-        camZ = player.pos.z + Math.cos(player.yaw) * dist;
-        camY = gy + 2.35 + player.pitch * 0.9;
-        if (camX >= camMinX && camX <= camMaxX && camZ >= camMinZ) break;
-        dist *= 0.68;
+      const headX = player.pos.x, headY = gy + 1.55, headZ = player.pos.z;
+      let dist = 3.4;
+      let camX = headX, camY = gy + 2.3, camZ = headZ;
+      for (let i = 0; i < 12; i++) {
+        camX = headX + Math.sin(player.yaw) * dist;
+        camZ = headZ + Math.cos(player.yaw) * dist;
+        camY = gy + 2.25 + player.pitch * 0.85;
+        const inYard = camX >= camMinX && camX <= camMaxX && camZ >= camMinZ;
+        if (inYard && !camHitsWall(camX, camY, camZ)) break;
+        dist *= 0.72;
       }
       camX = Math.max(camMinX, Math.min(camMaxX, camX));
       camZ = Math.max(camMinZ, camZ);
-      // Never let the follow cam sit south of the player into the void
-      if (dist < 1.1) {
-        camX = player.pos.x + Math.sin(player.yaw) * 1.1;
-        camZ = player.pos.z + Math.cos(player.yaw) * 1.1;
+      if (camHitsWall(camX, camY, camZ) || dist < 1.15) {
+        camX = headX + Math.sin(player.yaw) * 1.2;
+        camZ = headZ + Math.cos(player.yaw) * 1.2;
+        camY = gy + 2.1;
         camX = Math.max(camMinX, Math.min(camMaxX, camX));
         camZ = Math.max(camMinZ, camZ);
       }
       camera.position.set(camX, camY, camZ);
+      camera.near = 0.12;
       camera.lookAt(
-        player.pos.x - Math.sin(player.yaw) * 2.8,
-        gy + 1.4,
-        player.pos.z - Math.cos(player.yaw) * 2.8
+        headX - Math.sin(player.yaw) * 2.4,
+        gy + 1.35,
+        headZ - Math.cos(player.yaw) * 2.4
       );
 
       renderer.render(scene, camera);

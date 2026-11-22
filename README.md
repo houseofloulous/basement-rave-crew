@@ -2,7 +2,12 @@
 
 Static browser game for the Brooklyn club basement crew.
 
-## Play locally
+## Play
+
+Public site (GitHub Pages): **https://rave.houseofloulous.com**  
+(after Pages is enabled and DNS is pointed — same pattern as the door app)
+
+### Locally
 
 Open `index.html` in a browser, or serve the folder:
 

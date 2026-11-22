@@ -96,23 +96,98 @@
       transform: translate(-50%, -50%) scale(0.97);
       filter: brightness(0.95);
     }
+
+    /* After ENTER — pick the real GTA path (primary) or browser prototype */
+    #door {
+      display: none;
+      position: fixed; inset: 0; z-index: 25;
+      align-items: center; justify-content: center;
+      padding: 1.5rem;
+      background:
+        radial-gradient(900px 500px at 50% 0%, rgba(80, 12, 12, 0.55), transparent 60%),
+        rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(6px);
+    }
+    body.door-open #door { display: flex; }
+    body.door-open #start { display: none !important; }
+    #door .panel {
+      width: min(420px, 100%);
+      text-align: center;
+      color: #f2ebe3;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+    #door h1 {
+      margin: 0 0 0.4rem;
+      font-family: "Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: clamp(1.2rem, 4vw, 1.7rem);
+    }
+    #door p {
+      margin: 0 0 1.4rem;
+      color: #b5a79c;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+    #door .actions { display: flex; flex-direction: column; gap: 0.7rem; }
+    #door a, #door button {
+      appearance: none; -webkit-appearance: none;
+      display: block; width: 100%;
+      border: 0; border-radius: 999px;
+      padding: 0.95em 1.2em;
+      font-family: "Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 0.95rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      text-align: center;
+    }
+    #door .primary {
+      background: linear-gradient(180deg, #ff2a1a 0%, #e10600 45%, #b80500 100%);
+      color: #fff;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+    }
+    #door .secondary {
+      background: transparent;
+      color: #d8cfc6;
+      border: 1px solid #553428;
+    }
   </style>
 </head>
 <body>
   <div id="start">
     <img class="mock" src="landing-mock.png" alt="Basement — Mad Max Crew" />
-    <button type="button" id="enterBtn" onclick="window.__basementStartGame(event)" aria-label="Enter">ENTER</button>
+    <button type="button" id="enterBtn" aria-label="Enter">ENTER</button>
+  </div>
+
+  <div id="door" role="dialog" aria-label="Choose how to enter">
+    <div class="panel">
+      <h1>Basement</h1>
+      <p>The look you want is a <strong style="color:#fff">GTA: San Andreas</strong> club mod — same as the reference reel. The browser walkthrough is only a rough prototype.</p>
+      <div class="actions">
+        <a class="primary" href="install.html">Install the real club</a>
+        <button type="button" class="secondary" id="protoBtn">Browser prototype</button>
+      </div>
+    </div>
   </div>
 
   <div id="hint">↑↓ walk · ←→ turn · Shift sprint · Mouse look · Esc release</div>
 
   <script>
-  // Landing Enter — always dismiss overlay (even on repeat calls).
+  // ENTER opens the door chooser (GTA path primary). Prototype still available.
   window.__basementStarted = false;
+  window.__basementOpenDoor = function openDoor(ev) {
+    if (ev && ev.preventDefault) {
+      try { ev.preventDefault(); ev.stopPropagation(); } catch (e) {}
+    }
+    document.body.classList.add('door-open');
+  };
   window.__basementStartGame = function startGame(ev) {
     if (ev && ev.preventDefault) {
       try { ev.preventDefault(); ev.stopPropagation(); } catch (e) {}
     }
+    document.body.classList.remove('door-open');
     const overlay = document.getElementById('start');
     if (overlay) {
       overlay.classList.add('hidden');
@@ -121,6 +196,11 @@
       overlay.style.setProperty('pointer-events', 'none', 'important');
       overlay.setAttribute('aria-hidden', 'true');
       try { overlay.remove(); } catch (e) {}
+    }
+    const door = document.getElementById('door');
+    if (door) {
+      door.style.display = 'none';
+      try { door.remove(); } catch (e) {}
     }
     document.body.classList.add('playing');
     const already = window.__basementStarted;
@@ -131,11 +211,11 @@
     }
     return !already;
   };
-  (function bindEnter() {
+  (function bindDoor() {
     const btn = document.getElementById('enterBtn');
-    if (!btn) return;
-    btn.onclick = function (e) { window.__basementStartGame(e); };
-    btn.addEventListener('click', function (e) { window.__basementStartGame(e); }, true);
+    if (btn) btn.onclick = function (e) { window.__basementOpenDoor(e); };
+    const proto = document.getElementById('protoBtn');
+    if (proto) proto.onclick = function (e) { window.__basementStartGame(e); };
   })();
   </script>
   <script src="vendor/three.min.js"></script>
@@ -996,7 +1076,7 @@
     }
     renderer.domElement.addEventListener('click', () => {
       if (!window.__basementStarted) {
-        window.__basementStartGame();
+        window.__basementOpenDoor();
         return;
       }
       if (document.pointerLockElement !== renderer.domElement) {
@@ -1006,6 +1086,12 @@
     const enterBtn = document.getElementById('enterBtn');
     if (enterBtn) {
       enterBtn.onclick = function (e) {
+        window.__basementOpenDoor(e);
+      };
+    }
+    const protoBtn = document.getElementById('protoBtn');
+    if (protoBtn) {
+      protoBtn.onclick = function (e) {
         window.__basementStartGame(e);
         try { renderer.domElement.requestPointerLock(); } catch (err) {}
       };

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Install Basement — GTA San Andreas</title>
+  <style>
+    :root {
+      --bg: #0a0809;
+      --fg: #f2ebe3;
+      --muted: #a8988c;
+      --red: #e10600;
+      --line: #3a2a24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 600px at 50% -10%, #3a1010 0%, transparent 55%),
+        linear-gradient(180deg, #140c0e 0%, var(--bg) 40%, #050405 100%);
+      color: var(--fg);
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      line-height: 1.45;
+    }
+    main {
+      max-width: 40rem;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+    a { color: #ff6a5c; }
+    h1 {
+      font-family: "Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      margin: 0 0 0.5rem;
+    }
+    .tag {
+      color: var(--red);
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    p { color: var(--muted); }
+    ol {
+      padding-left: 1.2rem;
+      color: var(--fg);
+    }
+    li { margin: 0.75rem 0; }
+    li strong { color: #fff; }
+    .note {
+      margin-top: 2rem;
+      padding: 1rem 1.1rem;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.35);
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .back {
+      display: inline-block;
+      margin-bottom: 1.5rem;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="index.html">← Door</a>
+    <div class="tag">Mad Max Crew</div>
+    <h1>Install the real club</h1>
+    <p>
+      Basement is being built as a <strong style="color:#fff">GTA: San Andreas</strong> map —
+      the same medium as the club recreations that actually look like Basement
+      (not the browser prototype).
+    </p>
+    <ol>
+      <li><strong>Get GTA: San Andreas</strong> on PC (Steam / classic). Use a copy you’re willing to mod.</li>
+      <li><strong>Install ModLoader</strong> (+ ASI loader) so packs drop in without nuking the base game.</li>
+      <li><strong>Install Ariane</strong> if you’re helping build the map (<a href="https://gtastuff.com/ariane/" target="_blank" rel="noopener">gtastuff.com/ariane</a>).</li>
+      <li>When the pack ships, copy <code>modloader/BasementRaveCrew/</code> into your game’s <code>modloader</code> folder and launch SA.</li>
+    </ol>
+    <div class="note">
+      Pack status: scaffold only — layout + character roster are in
+      <code>gta-sa-mod/</code> on GitHub. We need one Windows PC with SA to block out the courtyard in Ariane next.
+      Full notes: <a href="BUILD-PIVOT.md">BUILD-PIVOT.md</a>
+    </div>
+  </main>
+</body>
+</html>

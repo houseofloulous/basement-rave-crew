@@ -16,15 +16,15 @@ What we’ve been shipping (`basement-rave-crew` Three.js walkthrough) will neve
 | **Crew avatars** | Custom ped skins / player models (Sam, Mike, Max, Chris, …) — each person picks their character in single-player; later MTA:SA if you want friends in one world |
 | **Web link** | Keep https://basement-rave-crew.apps.grok.bot as the **door**: poster, ENTER, crew vibe, Bitly — plus **install & play** for the SA mod. Browser 3D becomes an optional prototype, not the product |
 
-## Toolchain (PC)
+## Toolchain (Mac — no Windows PC required)
 
-1. **GTA: San Andreas** (Steam / classic PC) — dedicated modding copy  
-2. **ModLoader** — load our pack without overwriting the base game  
-3. **Ariane** map editor — place courtyard, ramp, tunnel, rooms in the SA world ([gtastuff.com/ariane](https://gtastuff.com/ariane/))  
-4. **Blender + INU Tools** — custom DFF/TXD/COL from your Basement photos when stock SA props aren’t enough  
+1. **CrossOver** on Mac + **Steam** bottle  
+2. **GTA: San Andreas** (Steam) inside CrossOver — downgrade to v1.0 + SilentPatch + ASI loader  
+3. **ModLoader** — drop-in packs without overwriting the base game  
+4. **Ariane** map editor against that install ([gtastuff.com/ariane](https://gtastuff.com/ariane/))  
 5. Ped / clothing mods for the Mad Max crew look  
 
-Mac friends: play via cloud PC, Boot Camp/Parallels Windows, or a shared Windows box. SA modding is a Windows-first workflow.
+Whisky can work but CrossOver is the more reliable Mac path for classic SA.
 
 ## What we stop doing
 
@@ -45,6 +45,6 @@ Mac friends: play via cloud PC, Boot Camp/Parallels Windows, or a shared Windows
 - **GDevelop** — we already tried; one capsule GLB + image props. Same ceiling.  
 - **Better Three.js** — fine for a toy; wrong engine for the aesthetic you keep pointing at.  
 
-## Open requirement (blocks the real game)
+## Open requirement
 
-Someone on the crew needs a **PC copy of GTA San Andreas** for modding. Without that, we can only prepare the pack and the web door — we can’t play the real club.
+A Mac with **CrossOver + GTA: San Andreas** (Steam). No separate Windows PC. Until that install exists, the browser walkthrough is the only playable door — and it must at least let you walk into the club.

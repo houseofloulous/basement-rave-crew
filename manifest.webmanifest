@@ -1,0 +1,12 @@
+{
+  "name": "Basement in Brooklyn",
+  "short_name": "Basement in Brooklyn",
+  "id": "com.basement.brooklyn",
+  "description": "Brutalist techno cavern for Sam, Mike, Max & Chris. Door ID check. DJ Charlotte de Witte. Mad Max Rave Crew. Free 4-player lobby.",
+  "orientation": "landscape",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "black",
+  "categories": ["games", "entertainment"],
+  "icons": []
+}

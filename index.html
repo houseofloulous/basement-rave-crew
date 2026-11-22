@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Basement Rave Crew</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+      background: #000; overflow: hidden;
+      font-family: system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed; inset: 0; z-index: 0;
+      display: block; width: 100% !important; height: 100% !important;
+      pointer-events: none;
+    }
+    body.playing canvas { pointer-events: auto; z-index: 1; }
+    #hint {
+      display: none;
+      position: fixed; left: 14px; bottom: 14px; z-index: 5;
+      color: #d8cfc6; font-size: 13px; text-shadow: 0 1px 3px #000;
+      pointer-events: none; user-select: none;
+      background: rgba(8,6,8,0.55); padding: 8px 12px; border: 1px solid #553428;
+    }
+    body.playing #hint { display: block; }
+
+    /* Full-bleed original mock — no CSS font remake */
+    #start {
+      position: fixed;
+      inset: 0;
+      width: 100vw; height: 100vh;
+      width: 100dvw; height: 100dvh;
+      z-index: 20;
+      background: #000;
+      overflow: hidden;
+      margin: 0; padding: 0;
+    }
+    #start.hidden { display: none !important; pointer-events: none !important; }
+    #start .mock {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+    }
+    /* Transparent hotspot over mock ENTER — no CSS label (mock already says ENTER) */
+    #enterBtn {
+      appearance: none; -webkit-appearance: none;
+      border: 0; padding: 0; margin: 0;
+      position: absolute;
+      left: 50%;
+      top: 79.5%;
+      transform: translate(-50%, -50%) scale(1);
+      width: min(30vw, 410px);
+      height: clamp(56px, 12vh, 92px);
+      z-index: 30;
+      cursor: pointer;
+      background: transparent;
+      color: transparent;
+      border-radius: 999px;
+      pointer-events: auto;
+      touch-action: manipulation;
+      font-size: 0;
+      box-shadow: none;
+      transition:
+        transform 0.18s cubic-bezier(0.34, 1.45, 0.64, 1),
+        box-shadow 0.18s ease;
+      will-change: transform;
+    }
+    #enterBtn:hover,
+    #enterBtn:focus-visible {
+      transform: translate(-50%, -50%) scale(1.08);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.28), 0 12px 28px rgba(225, 6, 0, 0.35);
+      outline: none;
+    }
+    #enterBtn:active {
+      transform: translate(-50%, -50%) scale(0.96);
+    }
+    #enterBtn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+  </style>
+</head>
+<body>
+  <div id="start">
+    <img class="mock" src="landing-mock.png" alt="Basement — Mad Max Crew" />
+    <button type="button" id="enterBtn" onclick="window.__basementStartGame(event)" aria-label="Enter"><span>ENTER</span></button>
+  </div>
+
+  <div id="hint">↑↓ walk · ←→ turn · Shift sprint · Mouse look · Esc release</div>
+
+  <script>
+  // Landing Enter — always dismiss overlay (even on repeat calls).
+  window.__basementStarted = false;
+  window.__basementStartGame = function startGame(ev) {
+    if (ev && ev.preventDefault) {
+      try { ev.preventDefault(); ev.stopPropagation(); } catch (e) {}
+    }
+    const overlay = document.getElementById('start');
+    if (overlay) {
+      overlay.classList.add('hidden');
+      overlay.style.setProperty('display', 'none', 'important');
+      overlay.style.setProperty('visibility', 'hidden', 'important');
+      overlay.style.setProperty('pointer-events', 'none', 'important');
+      overlay.setAttribute('aria-hidden', 'true');
+      try { overlay.remove(); } catch (e) {}
+    }
+    document.body.classList.add('playing');
+    const already = window.__basementStarted;
+    window.__basementStarted = true;
+    const canvas = window.__basementCanvas;
+    if (canvas && canvas.requestPointerLock) {
+      try { canvas.requestPointerLock(); } catch (e) {}
+    }
+    return !already;
+  };
+  (function bindEnter() {
+    const btn = document.getElementById('enterBtn');
+    if (!btn) return;
+    btn.onclick = function (e) { window.__basementStartGame(e); };
+    btn.addEventListener('click', function (e) { window.__basementStartGame(e); }, true);
+  })();
+  </script>
+  <script src="vendor/three.min.js"></script>
+  <script>
+  (function () {
+    try {
+    /**
+     * Floorplan: hand-drawn reel DbuGUFTtIGX (+Z north, +X east)
+     * Materials/lighting: Basement NY photo refs (Knockdown Center /
+     * Ivane Katamashvili / Coherent) — brick arches, red haze, F1 horns.
+     */
+    if (typeof THREE === 'undefined') throw new Error('THREE failed to load');
+    const loader = new THREE.TextureLoader();
+    const mats = {
+      concrete: new THREE.MeshLambertMaterial({ color: 0x8a8580 }),
+      concreteDark: new THREE.MeshLambertMaterial({ color: 0x3a3836 }),
+      brick: new THREE.MeshLambertMaterial({ color: 0x8a5a48 }),
+      brickFloor: new THREE.MeshLambertMaterial({ color: 0x5a3a32 }),
+      floor: new THREE.MeshLambertMaterial({ color: 0x2a2422 }),
+      outdoor: new THREE.MeshLambertMaterial({ color: 0x3a3834 }),
+      asphalt: new THREE.MeshLambertMaterial({ color: 0x2c2c2a }),
+      entrConcrete: new THREE.MeshLambertMaterial({ color: 0xb0aea8 }),
+      rampFloor: new THREE.MeshLambertMaterial({ color: 0x3a3a38 }),
+      entrBrick: new THREE.MeshLambertMaterial({ color: 0x8a5a48 }),
+      rustMetal: new THREE.MeshLambertMaterial({ color: 0x5a4030 }),
+      metal: new THREE.MeshLambertMaterial({ color: 0x3a3a42 }),
+      metalHeavy: new THREE.MeshLambertMaterial({ color: 0x2a2a30 }),
+      red: new THREE.MeshBasicMaterial({ color: 0xff4422 }),
+      blue: new THREE.MeshBasicMaterial({ color: 0x4488ff }),
+      orange: new THREE.MeshBasicMaterial({ color: 0xff6622 }),
+      orangeE: new THREE.MeshBasicMaterial({ color: 0xff8844 }),
+      whiteE: new THREE.MeshBasicMaterial({ color: 0xffffff }),
+      black: new THREE.MeshLambertMaterial({ color: 0x18181c }),
+      wood: new THREE.MeshLambertMaterial({ color: 0x6a4830 }),
+      skin: new THREE.MeshLambertMaterial({ color: 0xb08a70 }),
+      graffiti: new THREE.MeshLambertMaterial({ color: 0xd0ccc4 }),
+      harness: new THREE.MeshLambertMaterial({ color: 0x0e0e10 }),
+      lightAV: new THREE.MeshLambertMaterial({ color: 0x2a2a32 }),
+      bathTile: new THREE.MeshLambertMaterial({ color: 0xd0cbc4 }),
+      pipe: new THREE.MeshLambertMaterial({ color: 0xc8c4bc }),
+      speakerWhite: new THREE.MeshLambertMaterial({ color: 0xe8e6e2 }),
+    };
+    function applyMap(mat, url, repeat) {
+      loader.load(url, (t) => {
+        t.colorSpace = THREE.SRGBColorSpace;
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        if (repeat) t.repeat.set(repeat[0], repeat[1]);
+        mat.map = t;
+        mat.color.set(0xffffff);
+        mat.needsUpdate = true;
+      }, undefined, () => {});
+    }
+    // Photo-derived textures (textures-real/) with procedural fallbacks
+    applyMap(mats.brick, 'textures-real/brick-red.jpg', [2, 2]);
+    applyMap(mats.brickFloor, 'textures-real/brick-floor.jpg', [4, 4]);
+    applyMap(mats.concrete, 'textures-real/concrete-industrial.jpg', [2, 2]);
+    applyMap(mats.concreteDark, 'textures-real/concrete-industrial.jpg', [1.5, 1.5]);
+    applyMap(mats.floor, 'textures-real/floor-dark.jpg', [5, 5]);
+    applyMap(mats.outdoor, 'textures-real/gravel-yard.jpg', [6, 6]);
+    applyMap(mats.asphalt, 'textures-real/entrance-asphalt.jpg', [8, 8]);
+    applyMap(mats.entrConcrete, 'textures-real/entrance-concrete.jpg', [2, 3]);
+    applyMap(mats.rampFloor, 'textures-real/entrance-ramp-floor.jpg', [3, 6]);
+    applyMap(mats.entrBrick, 'textures-real/entrance-yard-brick.jpg', [2.5, 2.5]);
+    applyMap(mats.rustMetal, 'textures-real/entrance-rust-metal.jpg', [2, 2]);
+    applyMap(mats.bathTile, 'textures-real/bath-tile.jpg', [3, 3]);
+    applyMap(mats.metalHeavy, 'textures-real/metal-heavy.jpg', [2, 2]);
+    applyMap(mats.graffiti, 'GraffitiMadMax.png', null);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x151210);
+    scene.fog = new THREE.FogExp2(0x151210, 0.0035); // outdoor courtyard must stay readable
+
+    const camera = new THREE.PerspectiveCamera(75, Math.max(innerWidth, 1) / Math.max(innerHeight, 1), 0.08, 300);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setClearColor(0x1a1010, 1);
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+    renderer.setSize(Math.max(innerWidth, 1), Math.max(innerHeight, 1));
+    renderer.shadowMap.enabled = false; // fewer black-shadow artifacts
+    renderer.domElement.style.position = 'fixed';
+    renderer.domElement.style.inset = '0';
+    renderer.domElement.style.zIndex = '0';
+    document.body.appendChild(renderer.domElement);
+
+    // Bright enough to read courtyard + brick after Enter
+    scene.add(new THREE.AmbientLight(0xffccbb, 1.15));
+    scene.add(new THREE.HemisphereLight(0xffc8a8, 0x1a120e, 1.05));
+    const key = new THREE.DirectionalLight(0xffe0c8, 1.35);
+    key.position.set(8, 40, -6);
+    scene.add(key);
+    const yardFill = new THREE.PointLight(0xffccaa, 4.5, 55, 1.4);
+    yardFill.position.set(3.5, 6, -8);
+    scene.add(yardFill);
+    const redWash = new THREE.PointLight(0xff4422, 3.2, 28, 1.5);
+    redWash.position.set(4, 2.4, 6);
+    scene.add(redWash);
+    const fill = new THREE.PointLight(0xffaa66, 2.4, 35, 1.5);
+    fill.position.set(10, 3.5, 12);
+    scene.add(fill);
+
+    const world = new THREE.Group();
+    scene.add(world);
+    const colliders = [];
+    const npcs = [];
+
+    function addBox(x, y, z, w, h, d, mat, opts = {}) {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      mesh.position.set(x, y, z);
+      if (opts.rotY) mesh.rotation.y = opts.rotY;
+      mesh.castShadow = !opts.noShadow;
+      mesh.receiveShadow = true;
+      world.add(mesh);
+      if (!opts.noCollide) {
+        // AABB approx (ignore rotation for diagonal — handled separately)
+        const hw = opts.rotY ? (Math.abs(Math.cos(opts.rotY)) * w + Math.abs(Math.sin(opts.rotY)) * d) / 2 : w / 2;
+        const hd = opts.rotY ? (Math.abs(Math.sin(opts.rotY)) * w + Math.abs(Math.cos(opts.rotY)) * d) / 2 : d / 2;
+        colliders.push({
+          min: new THREE.Vector3(x - hw, y - h / 2, z - hd),
+          max: new THREE.Vector3(x + hw, y + h / 2, z + hd),
+        });
+      }
+      return mesh;
+    }
+
+    function glow(x, y, z, color, intensity, dist) {
+      const l = new THREE.PointLight(color, intensity, dist, 2);
+      l.position.set(x, y, z);
+      scene.add(l);
+      const mat =
+        color === 0xff5520 || color === 0xff6622 || color === 0xff8844 ? mats.orange :
+        color === 0x3366ff || color === 0x4488ff ? mats.blue :
+        color === 0xff2200 || color === 0xff2222 || color === 0xff4422 ? mats.red : mats.whiteE;
+      addBox(x, y, z, 0.12, 0.12, 0.12, mat, { noCollide: true, noShadow: true });
+      return l;
+    }
+
+    /** Ceiling pipe run (photo: white conduit along low ceilings). */
+    function addPipe(x1, z1, x2, z2, y = 3.1) {
+      const dx = x2 - x1, dz = z2 - z1;
+      const len = Math.hypot(dx, dz) || 1;
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.08, len, 8),
+        mats.pipe
+      );
+      mesh.position.set((x1 + x2) / 2, y, (z1 + z2) / 2);
+      mesh.rotation.z = Math.PI / 2;
+      mesh.rotation.y = Math.atan2(dz, dx);
+      mesh.castShadow = true;
+      world.add(mesh);
+    }
+
+    /** Funktion-One style white horn stack. */
+    function addSpeakerStack(x, y, z, facing = 0) {
+      const g = new THREE.Group();
+      const cab = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.1, 0.55), mats.speakerWhite);
+      cab.position.y = 0;
+      const horn = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.55, 0.7), mats.speakerWhite);
+      horn.position.set(0, 0.85, 0.05);
+      const top = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.45, 0.45), mats.black);
+      top.position.y = 1.35;
+      g.add(cab, horn, top);
+      g.position.set(x, y, z);
+      g.rotation.y = facing;
+      world.add(g);
+      colliders.push({
+        min: new THREE.Vector3(x - 0.5, 0, z - 0.5),
+        max: new THREE.Vector3(x + 0.5, 2.2, z + 0.5),
+      });
+    }
+
+    /** DJ orange bulb grid (photo: 2×4 warm circles). */
+    function addOrangeGrid(cx, cy, cz, cols = 4, rows = 2) {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const x = cx + (c - (cols - 1) / 2) * 0.55;
+          const y = cy + (r - (rows - 1) / 2) * 0.55;
+          addBox(x, y, cz, 0.35, 0.35, 0.12, mats.orangeE, { noCollide: true, noShadow: true });
+        }
+      }
+      glow(cx, cy, cz - 0.5, 0xff8844, 4.5, 16);
+    }
+
+    /** Vertical orange spotlight pool on floor (photo haze beams). */
+    function addSpotBeam(x, z, color = 0xff5520) {
+      glow(x, 3.6, z, color, 2.2, 9);
+    }
+
+    /** Photo panel on a wall (tunnel arches / DJ backdrop). */
+    function wallPanel(url, x, y, z, w, h, rotY = 0) {
+      const mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      applyMap(mat, url, null);
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+      mesh.position.set(x, y, z);
+      mesh.rotation.y = rotY;
+      world.add(mesh);
+      return mesh;
+    }
+
+    // Floating room labels removed — players discover the floorplan.
+    function makeLabel(_text, _x, _y, _z, _scale) { return null; }
+
+    function makeNPC(x, z, opts = {}) {
+      const group = new THREE.Group();
+      const bodyColor = opts.color != null ? opts.color : 0x121216;
+      const bodyMat = new THREE.MeshLambertMaterial({ color: bodyColor });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.15, 0.32), bodyMat);
+      body.position.y = 0.95;
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.32), mats.skin);
+      head.position.y = 1.7;
+      const s1 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.7, 0.06), mats.harness);
+      s1.position.set(-0.12, 1.05, 0.16);
+      s1.rotation.z = 0.35;
+      const s2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.7, 0.06), mats.harness);
+      s2.position.set(0.12, 1.05, 0.16);
+      s2.rotation.z = -0.35;
+      const ring = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.06), mats.metal);
+      ring.position.set(0, 1.0, 0.18);
+      group.add(body, head, s1, s2, ring);
+      if (opts.coat) {
+        const coat = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.3, 0.2), new THREE.MeshLambertMaterial({ color: 0x0a0a0c }));
+        coat.position.set(0, 1.0, -0.2);
+        group.add(coat);
+      }
+      group.position.set(x, 0, z);
+      group.rotation.y = opts.facing != null ? opts.facing : Math.random() * Math.PI * 2;
+      world.add(group);
+      npcs.push({
+        group,
+        mode: opts.mode || 'idle',
+        base: new THREE.Vector3(x, 0, z),
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.8 + Math.random() * 1.2,
+        radius: opts.radius || 0.6,
+      });
+      return group;
+    }
+
+    function spawnCrowd(cx, cz, count, mode, spreadX, spreadZ) {
+      for (let i = 0; i < count; i++) {
+        makeNPC(
+          cx + (Math.random() - 0.5) * spreadX,
+          cz + (Math.random() - 0.5) * spreadZ,
+          {
+            mode,
+            coat: Math.random() < 0.15,
+            color: Math.random() < 0.7 ? 0x121216 : 0x1a1520,
+            facing: mode === 'queue' ? Math.PI : undefined, // face north toward door
+            radius: mode === 'dance' ? 0.35 : 0.9,
+          }
+        );
+      }
+    }
+
+    function roomShell(cx, cz, w, d, wallH, ceiling) {
+      addBox(cx, 0.05, cz, w, 0.1, d, mats.floor, { noShadow: true });
+      addBox(cx, wallH / 2, cz - d / 2, w, wallH, 0.45, mats.concrete);
+      addBox(cx, wallH / 2, cz + d / 2, w, wallH, 0.45, mats.concrete);
+      addBox(cx - w / 2, wallH / 2, cz, 0.45, wallH, d, mats.concrete);
+      addBox(cx + w / 2, wallH / 2, cz, 0.45, wallH, d, mats.concrete);
+      if (ceiling) {
+        addBox(cx, wallH + 0.05, cz, w, 0.12, d, mats.concreteDark, { noShadow: true });
+      }
+    }
+
+    function doorwayGap(wallAxis, x, z, width) {
+      // Visual floor strip through openings (walls still solid — openings via missing wall segments)
+      if (wallAxis === 'x') {
+        addBox(x, 0.04, z, width, 0.08, 2.4, mats.floor, { noCollide: true, noShadow: true });
+      } else {
+        addBox(x, 0.04, z, 2.4, 0.08, width, mats.floor, { noCollide: true, noShadow: true });
+      }
+    }
+
+    // ========== LAYOUT (reel map DbuGUFTtIGX — watch coords ×0.42) ==========
+    // Map 0..100 (W→E, S→N). +Z north, +X east. Source: Watch floorplan reel.
+    const S = 0.42;
+    const X = (mx) => mx * S;
+    const Z = (mz) => mz * S;
+    const W = (a, b) => (b - a) * S;
+    const CX = (a, b) => ((a + b) / 2) * S;
+    const CZ = (a, b) => ((a + b) / 2) * S;
+
+    function darkCell(cx, cz, openToward) {
+      addBox(cx, 0.05, cz, 4.2, 0.1, 4.0, mats.brickFloor, { noShadow: true });
+      const solid = (ox, oz, ww, dd) => addBox(ox, 1.2, oz, ww, 2.4, dd, mats.concreteDark);
+      if (openToward === 's') {
+        solid(cx - 1.35, cz - 2.0, 1.5, 0.3); solid(cx + 1.35, cz - 2.0, 1.5, 0.3);
+      } else solid(cx, cz - 2.0, 4.2, 0.3);
+      if (openToward === 'n') {
+        solid(cx - 1.35, cz + 2.0, 1.5, 0.3); solid(cx + 1.35, cz + 2.0, 1.5, 0.3);
+      } else solid(cx, cz + 2.0, 4.2, 0.3);
+      solid(cx - 2.1, cz, 0.3, 4.0);
+      solid(cx + 2.1, cz, 0.3, 4.0);
+      addBox(cx, 2.45, cz, 4.2, 0.1, 4.0, mats.concreteDark, { noShadow: true });
+      addBox(cx - 0.8, 0.35, cz, 1.2, 0.6, 0.6, mats.black, { noCollide: true });
+      glow(cx, 2.1, cz, 0xff2222, 1.0, 5);
+      spawnCrowd(cx, cz, 3, 'loiter', 2.2, 1.8);
+    }
+
+    // ========== ENTRANCE: street → gate → ramp → tunnel (reel DVEGJWuDbA0) ==========
+    // Path: courtyard queue → open metal grid gate → downward concrete ramp
+    // (retaining walls + handrails) → dark rectangular tunnel (red ceiling light)
+    // → rise into club ID check. Photo refs: media/entrance-refs + textures-real/entrance-*
+    const RAMP_X0 = 7.2, RAMP_X1 = 12.8; // narrow ramp/tunnel width (map)
+    const RAMP_Z0 = -3, RAMP_Z1 = 10;    // ramp top → bottom
+    const TUN_Z0 = 10, TUN_Z1 = 18;      // tunnel void
+    const RISE_Z0 = 18, RISE_Z1 = 22;    // steps up into club floor
+    const RAMP_DROP = 2.15;              // meters down the ramp
+
+    function groundY(wx, wz) {
+      const mx = wx / S, mz = wz / S;
+      if (mx > RAMP_X0 - 0.4 && mx < RAMP_X1 + 0.4) {
+        if (mz >= RAMP_Z0 && mz < RAMP_Z1) {
+          const t = (mz - RAMP_Z0) / (RAMP_Z1 - RAMP_Z0);
+          return -RAMP_DROP * t;
+        }
+        if (mz >= TUN_Z0 && mz < RISE_Z0) return -RAMP_DROP;
+        if (mz >= RISE_Z0 && mz < RISE_Z1) {
+          const t = (mz - RISE_Z0) / (RISE_Z1 - RISE_Z0);
+          return -RAMP_DROP + RAMP_DROP * t;
+        }
+      }
+      return 0;
+    }
+
+    // Street / courtyard asphalt (spawn + outdoor line) — extend south for follow-cam
+    addBox(CX(0, 22), 0.04, CZ(-36, -3), W(0, 22), 0.08, W(-36, -3), mats.asphalt, { noShadow: true });
+    // Courtyard side buildings / fence mass
+    addBox(X(-0.5), 2.2, CZ(-36, -3), 0.5, 4.4, W(-36, -3), mats.entrBrick);
+    addBox(X(22), 2.2, CZ(-36, -3), 0.5, 4.4, W(-36, -3), mats.entrBrick);
+    // South street closure
+    addBox(CX(0, 22), 2.0, Z(-36), W(0, 22), 4.0, 0.45, mats.entrBrick);
+    // Queue barricades in courtyard
+    for (let i = 0; i < 7; i++) {
+      addBox(X(4.5 + i * 1.15), 0.7, Z(-16), 0.1, 1.3, 0.1, mats.rustMetal);
+      addBox(X(4.5 + i * 1.15), 0.7, Z(-8.5), 0.1, 1.3, 0.1, mats.rustMetal);
+    }
+    // Subtle VIP lane paint (not a glowing MeshBasic slab)
+    addBox(CX(16.5, 20.5), 0.06, CZ(-14, -7), W(16.5, 20.5), 0.02, W(-14, -7), mats.rustMetal, { noCollide: true, noShadow: true });
+    // Queue ahead toward the gate — leave clear space at the south end for spawn
+    spawnCrowd(X(8.5), Z(-9), 12, 'queue', 3.8, 3.2);
+    for (let i = 0; i < 4; i++) {
+      makeNPC(X(8.2 + i * 0.9), Z(-4.8), { mode: 'idle', color: 0x0c0c10, facing: Math.PI });
+    }
+
+    // Open heavy metal grid gate at top of ramp (walkable center gap)
+    {
+      const gz = Z(RAMP_Z0);
+      const posts = [RAMP_X0 - 0.3, RAMP_X0 + 0.6, RAMP_X1 - 0.6, RAMP_X1 + 0.3];
+      for (const mx of posts) {
+        addBox(X(mx), 1.55, gz, 0.18, 3.1, 0.18, mats.rustMetal);
+      }
+      // Horizontal rails (grid look) — leave center opening
+      for (let r = 0; r < 5; r++) {
+        const yy = 0.45 + r * 0.55;
+        addBox(CX(RAMP_X0 - 0.4, RAMP_X0 + 0.9), yy, gz, W(RAMP_X0 - 0.4, RAMP_X0 + 0.9), 0.08, 0.08, mats.rustMetal, { noCollide: true });
+        addBox(CX(RAMP_X1 - 0.9, RAMP_X1 + 0.4), yy, gz, W(RAMP_X1 - 0.9, RAMP_X1 + 0.4), 0.08, 0.08, mats.rustMetal, { noCollide: true });
+      }
+      for (let c = 0; c < 3; c++) {
+        addBox(X(RAMP_X0 - 0.15 + c * 0.35), 1.5, gz, 0.06, 2.9, 0.06, mats.rustMetal, { noCollide: true });
+        addBox(X(RAMP_X1 + 0.15 - c * 0.35), 1.5, gz, 0.06, 2.9, 0.06, mats.rustMetal, { noCollide: true });
+      }
+      addBox(X((RAMP_X0 + RAMP_X1) / 2), 3.15, gz, W(RAMP_X0 - 0.5, RAMP_X1 + 0.5), 0.14, 0.14, mats.rustMetal);
+    }
+
+    // Downward concrete ramp — stepped slabs + rising retaining walls + handrails
+    {
+      const steps = 14;
+      for (let i = 0; i < steps; i++) {
+        const t0 = i / steps, t1 = (i + 1) / steps;
+        const mz0 = RAMP_Z0 + (RAMP_Z1 - RAMP_Z0) * t0;
+        const mz1 = RAMP_Z0 + (RAMP_Z1 - RAMP_Z0) * t1;
+        const yTop = -RAMP_DROP * t0;
+        const yBot = -RAMP_DROP * t1;
+        const yMid = (yTop + yBot) / 2;
+        addBox(CX(RAMP_X0, RAMP_X1), yMid, CZ(mz0, mz1), W(RAMP_X0, RAMP_X1), Math.max(0.12, yTop - yBot + 0.08), W(mz0, mz1), mats.rampFloor, { noShadow: true });
+        // Retaining walls rise as ramp descends (wall top stays near street level)
+        const wallH = 1.2 + RAMP_DROP * t1 + 0.4;
+        const wallY = yBot + wallH / 2;
+        addBox(X(RAMP_X0), wallY, CZ(mz0, mz1), 0.35, wallH, W(mz0, mz1), mats.entrConcrete);
+        addBox(X(RAMP_X1), wallY, CZ(mz0, mz1), 0.35, wallH, W(mz0, mz1), mats.entrConcrete);
+        // Handrails both sides
+        const railY = yMid + 1.05;
+        addBox(X(RAMP_X0 + 0.25), railY, CZ(mz0, mz1), 0.06, 0.06, W(mz0, mz1), mats.rustMetal, { noCollide: true });
+        addBox(X(RAMP_X1 - 0.25), railY, CZ(mz0, mz1), 0.06, 0.06, W(mz0, mz1), mats.rustMetal, { noCollide: true });
+        if (i % 2 === 0) {
+          addBox(X(RAMP_X0 + 0.25), yMid + 0.55, Z((mz0 + mz1) / 2), 0.05, 1.0, 0.05, mats.rustMetal, { noCollide: true });
+          addBox(X(RAMP_X1 - 0.25), yMid + 0.55, Z((mz0 + mz1) / 2), 0.05, 1.0, 0.05, mats.rustMetal, { noCollide: true });
+        }
+      }
+    }
+
+    // Upper facade: industrial brick + Knockdown railing above tunnel mouth
+    addBox(CX(0, RAMP_X0), 2.4, Z(TUN_Z0), W(0, RAMP_X0), 4.8, 0.5, mats.entrBrick);
+    addBox(CX(RAMP_X1, 22), 2.4, Z(TUN_Z0), W(RAMP_X1, 22), 4.8, 0.5, mats.entrBrick);
+    addBox(CX(RAMP_X0, RAMP_X1), 3.6 - RAMP_DROP * 0.15, Z(TUN_Z0), W(RAMP_X0, RAMP_X1), 1.4, 0.4, mats.entrBrick);
+    // Railing above tunnel mouth
+    for (let i = 0; i < 6; i++) {
+      addBox(X(RAMP_X0 + 0.4 + i * 0.9), 4.55, Z(TUN_Z0 - 0.15), 0.08, 0.7, 0.08, mats.rustMetal, { noCollide: true });
+    }
+    addBox(CX(RAMP_X0, RAMP_X1), 4.9, Z(TUN_Z0 - 0.15), W(RAMP_X0, RAMP_X1), 0.08, 0.08, mats.rustMetal, { noCollide: true });
+    wallPanel('textures-real/entrance-brick.jpg', X((RAMP_X0 + RAMP_X1) / 2), 5.2, Z(TUN_Z0 - 0.28), 4.2, 1.1, 0);
+
+    // Rectangular tunnel void — dark, single red ceiling light near mouth
+    {
+      const floorY = -RAMP_DROP;
+      const ceilY = floorY + 2.85;
+      addBox(CX(RAMP_X0, RAMP_X1), floorY + 0.05, CZ(TUN_Z0, TUN_Z1), W(RAMP_X0, RAMP_X1), 0.1, W(TUN_Z0, TUN_Z1), mats.rampFloor, { noShadow: true });
+      addBox(X(RAMP_X0), floorY + 1.4, CZ(TUN_Z0, TUN_Z1), 0.4, 2.8, W(TUN_Z0, TUN_Z1), mats.entrConcrete);
+      addBox(X(RAMP_X1), floorY + 1.4, CZ(TUN_Z0, TUN_Z1), 0.4, 2.8, W(TUN_Z0, TUN_Z1), mats.entrConcrete);
+      addBox(CX(RAMP_X0, RAMP_X1), ceilY, CZ(TUN_Z0, TUN_Z1), W(RAMP_X0, RAMP_X1), 0.18, W(TUN_Z0, TUN_Z1), mats.concreteDark, { noShadow: true });
+      // Formwork seam ribs
+      for (let i = 0; i < 4; i++) {
+        const mz = TUN_Z0 + 1.5 + i * 1.8;
+        addBox(X(RAMP_X0 + 0.22), floorY + 1.4, Z(mz), 0.08, 2.6, 0.08, mats.concrete, { noCollide: true });
+        addBox(X(RAMP_X1 - 0.22), floorY + 1.4, Z(mz), 0.08, 2.6, 0.08, mats.concrete, { noCollide: true });
+      }
+      // Single red ceiling light near mouth
+      glow(X((RAMP_X0 + RAMP_X1) / 2), ceilY - 0.25, Z(TUN_Z0 + 1.2), 0xff2200, 3.4, 9);
+      wallPanel('textures-real/panel-tunnel-arches.jpg', X(RAMP_X0 + 0.22), floorY + 1.5, Z(TUN_Z0 + 4), 2.4, 2.0, Math.PI / 2);
+    }
+
+    // Rise back into club floor (short stepped ramp)
+    {
+      const steps = 6;
+      for (let i = 0; i < steps; i++) {
+        const t0 = i / steps, t1 = (i + 1) / steps;
+        const mz0 = RISE_Z0 + (RISE_Z1 - RISE_Z0) * t0;
+        const mz1 = RISE_Z0 + (RISE_Z1 - RISE_Z0) * t1;
+        const y0 = -RAMP_DROP + RAMP_DROP * t0;
+        const y1 = -RAMP_DROP + RAMP_DROP * t1;
+        addBox(CX(RAMP_X0, RAMP_X1), (y0 + y1) / 2, CZ(mz0, mz1), W(RAMP_X0, RAMP_X1), Math.max(0.12, Math.abs(y1 - y0) + 0.08), W(mz0, mz1), mats.brickFloor, { noShadow: true });
+        addBox(X(RAMP_X0), (y0 + y1) / 2 + 1.2, CZ(mz0, mz1), 0.35, 2.4, W(mz0, mz1), mats.brick);
+        addBox(X(RAMP_X1), (y0 + y1) / 2 + 1.2, CZ(mz0, mz1), 0.35, 2.4, W(mz0, mz1), mats.brick);
+      }
+    }
+
+    // Club corridor after rise (was eastbound entrance hall) — map 0-20, 20-25 bridge
+    addBox(CX(0, 20), 0.05, CZ(22, 25), W(0, 20), 0.1, W(22, 25), mats.brickFloor, { noShadow: true });
+    addBox(X(0), 1.7, CZ(22, 25), 0.4, 3.4, W(22, 25), mats.brick);
+    addBox(CX(0, 20), 3.45, CZ(22, 25), W(0, 20), 0.12, W(22, 25), mats.concreteDark, { noShadow: true });
+    glow(X(10), 2.0, Z(23.5), 0xff4422, 2.0, 8);
+
+    // ID / dress-code rails (after tunnel, before hub) — no floating labels
+    addBox(X(18), 0.9, Z(25), 0.15, 1.6, 2.2, mats.metal);
+    addBox(X(20), 0.9, Z(25), 0.15, 1.6, 2.2, mats.metal);
+    addBox(X(22), 0.9, Z(25), 0.15, 1.6, 2.2, mats.metal);
+    glow(X(20), 2.2, Z(25), 0xff2222, 2, 8);
+    for (let i = 0; i < 4; i++) makeNPC(X(16 + i * 0.9), Z(23.5), { mode: 'idle', color: 0x0c0c10, facing: Math.PI });
+
+    // North leg into hub
+    addBox(CX(15, 25), 0.05, CZ(20, 32), W(15, 25), 0.1, W(20, 32), mats.brickFloor, { noShadow: true });
+    addBox(X(15), 1.7, CZ(20, 32), 0.4, 3.4, W(20, 32), mats.brick);
+    addBox(X(25), 1.7, CZ(20, 28), 0.4, 3.4, W(20, 28), mats.brick);
+    addBox(CX(15, 25), 3.45, CZ(20, 32), W(15, 25), 0.12, W(20, 32), mats.concreteDark, { noShadow: true });
+    glow(X(20), 2.0, Z(28), 0xff4422, 2.5, 10);
+
+    // Lockers 0-20, 25-45
+    addBox(CX(0, 20), 0.05, CZ(25, 45), W(0, 20), 0.1, W(25, 45), mats.brickFloor, { noShadow: true });
+    addBox(CX(0, 20), 1.6, Z(25), W(0, 20), 3.2, 0.4, mats.brick);
+    addBox(CX(0, 20), 1.6, Z(45), W(0, 20), 3.2, 0.4, mats.brick);
+    addBox(X(0), 1.6, CZ(25, 45), 0.4, 3.2, W(25, 45), mats.brick);
+    addBox(X(20), 1.6, CZ(25, 32), 0.4, 3.2, W(25, 32), mats.brick);
+    addBox(X(20), 1.6, CZ(38, 45), 0.4, 3.2, W(38, 45), mats.brick);
+    addBox(CX(0, 20), 3.25, CZ(25, 45), W(0, 20), 0.1, W(25, 45), mats.concreteDark, { noShadow: true });
+    for (let row = 0; row < 2; row++) {
+      for (let col = 0; col < 5; col++) {
+        addBox(X(3 + col * 3), 0.85, Z(30 + row * 6), 1.0, 1.7, 0.7, mats.metalHeavy);
+      }
+    }
+    addBox(X(14), 1.1, Z(40), 1.1, 2.1, 0.8, mats.metalHeavy); // snack (was flat MeshBasic orange)
+    makeLabel('LOCKERS', X(10), 3.4, Z(35), 4);
+    spawnCrowd(X(10), Z(36), 5, 'loiter', 5, 4);
+
+    // Central hub 20-80, 25-50
+    addBox(CX(20, 80), 0.05, CZ(25, 50), W(20, 80), 0.1, W(25, 50), mats.brickFloor, { noShadow: true });
+    addBox(CX(20, 80), 3.4, CZ(25, 50), W(20, 80), 0.12, W(25, 50), mats.concreteDark, { noShadow: true });
+    addBox(CX(30, 75), 1.7, Z(25), W(30, 75), 3.4, 0.4, mats.brick);
+    makeLabel('HUB · BASEMENT', X(40), 0.45, Z(38), 5);
+    addBox(X(40), 0.12, Z(38), 2.2, 0.15, 2.2, mats.concrete, { noCollide: true });
+    glow(X(40), 2.5, Z(38), 0xff5520, 2, 14);
+    spawnCrowd(X(45), Z(38), 10, 'loiter', 20, 8);
+    addPipe(X(25), Z(30), X(70), Z(30), 3.15);
+
+    // Basement dance 0-40, 50-100
+    const bh = 4.4;
+    addBox(CX(0, 40), 0.05, CZ(50, 100), W(0, 40), 0.1, W(50, 100), mats.brickFloor, { noShadow: true });
+    addBox(CX(0, 40), bh / 2, Z(100), W(0, 40), bh, 0.5, mats.brick);
+    addBox(X(0), bh / 2, CZ(50, 100), 0.5, bh, W(50, 100), mats.brick);
+    addBox(CX(0, 18), bh / 2, Z(50), W(0, 18), bh, 0.5, mats.brick);
+    addBox(CX(32, 40), bh / 2, Z(50), W(32, 40), bh, 0.5, mats.brick);
+    addBox(X(40), bh / 2, CZ(50, 62), 0.5, bh, W(50, 62), mats.brick);
+    addBox(X(40), bh / 2, CZ(88, 100), 0.5, bh, W(88, 100), mats.brick);
+    addBox(CX(0, 40), bh + 0.05, CZ(50, 100), W(0, 40), 0.12, W(50, 100), mats.concreteDark, { noShadow: true });
+    for (const px of [10, 20, 30]) {
+      for (const pz of [60, 75, 90]) addBox(X(px), bh / 2 - 0.1, Z(pz), 1.1, bh - 0.2, 1.1, mats.concrete);
+    }
+    addPipe(X(5), Z(55), X(35), Z(55), bh - 0.4);
+    addPipe(X(5), Z(75), X(35), Z(75), bh - 0.5);
+    addBox(X(20), 0.95, Z(97), 5.0, 1.8, 2.0, mats.black);
+    makeNPC(X(20), Z(96), { mode: 'idle', color: 0xe8e8f0, coat: true, facing: Math.PI });
+    addOrangeGrid(X(20), 3.0, Z(99.2), 4, 2);
+    wallPanel('textures-real/panel-dj-orange-grid.jpg', X(20), 3.0, Z(99.5), 3.0, 1.8, Math.PI);
+    addSpeakerStack(X(12), 0.9, Z(94), 0.3);
+    addSpeakerStack(X(28), 0.9, Z(94), -0.3);
+    addSpeakerStack(X(8), 0.9, Z(70), 1.0);
+    addSpeakerStack(X(32), 0.9, Z(70), -1.0);
+    wallPanel('textures-real/panel-funktion-horns.jpg', X(1.2), 2.4, Z(80), 2.2, 1.5, Math.PI / 2);
+    for (const [px, pz] of [[12, 65], [18, 78], [28, 68], [15, 88], [25, 82], [22, 60]]) addSpotBeam(X(px), Z(pz));
+    makeLabel('EXIT', X(1.5), 2.4, Z(85), 2.5);
+    makeLabel('BASEMENT · CHARLOTTE DJ', X(20), 4.0, Z(75), 6);
+    spawnCrowd(X(20), Z(75), 42, 'dance', 14, 16);
+
+    // LIGHT A/V (1) 25-40, 50-55
+    addBox(CX(25, 40), 1.3, CZ(50, 55), W(25, 40), 2.5, W(50, 55), mats.lightAV);
+    glow(X(32), 2.8, Z(52), 0x3366ff, 2.5, 10);
+    makeLabel('LIGHT A/V', X(32), 3.5, Z(52), 3.2);
+
+    // Main BAR 45-65, 50-55
+    addBox(CX(45, 65), 0.05, CZ(48, 56), W(45, 65), 0.1, W(48, 56), mats.brickFloor, { noShadow: true });
+    addBox(CX(45, 65), 0.75, Z(53), W(45, 65) - 1, 1.4, 1.3, mats.metalHeavy);
+    addBox(X(50), 1.3, Z(54.5), 1.3, 2.0, 0.6, mats.whiteE, { noCollide: true });
+    addBox(X(58), 1.3, Z(54.5), 1.3, 2.0, 0.6, mats.whiteE, { noCollide: true });
+    glow(X(55), 2.4, Z(53), 0xffaa88, 2.5, 10);
+    makeLabel('MAIN BAR', X(55), 3.0, Z(53), 3.5);
+    spawnCrowd(X(55), Z(50), 6, 'loiter', 6, 2);
+    addBox(CX(40, 46), 0.04, CZ(50, 60), W(40, 46), 0.08, W(50, 60), mats.brickFloor, { noCollide: true, noShadow: true });
+
+    // Dark rooms 40-75, 60-90
+    addBox(CX(40, 75), 0.04, CZ(58, 92), W(40, 75), 0.08, W(58, 92), mats.brickFloor, { noCollide: true, noShadow: true });
+    darkCell(X(48), Z(68), 'n');
+    darkCell(X(62), Z(68), 'n');
+    darkCell(X(48), Z(82), 's');
+    darkCell(X(62), Z(82), 's');
+    makeLabel('DARK ROOMS', X(55), 3.2, Z(75), 4.5);
+    glow(X(55), 2.0, Z(75), 0xff2200, 2, 12);
+
+    // Backyard 75-100, 75-100
+    addBox(CX(75, 100), 0.05, CZ(75, 100), W(75, 100), 0.1, W(75, 100), mats.outdoor, { noShadow: true });
+    addBox(CX(75, 100), 0.9, Z(100), W(75, 100), 1.8, 0.4, mats.concrete);
+    addBox(X(100), 1.0, CZ(75, 100), 0.4, 2, W(75, 100), mats.concrete);
+    addBox(X(75), 1.0, CZ(75, 85), 0.4, 2, W(75, 85), mats.concrete);
+    addBox(CX(75, 88), 0.7, CZ(85, 94), W(75, 88) - 0.5, 1.3, 1.2, mats.wood);
+    glow(X(82), 2.2, Z(90), 0xff5520, 2.5, 12);
+    makeLabel('BACKYARD BAR', X(82), 2.9, Z(90), 3.2);
+    for (let i = 0; i < 4; i++) addBox(X(92), 0.2 + i * 0.28, Z(80 + i * 1.2), 4, 0.25, 1.1, mats.concrete, { noCollide: true });
+    makeLabel('BACKYARD · BREAK TIME', X(88), 3.2, Z(88), 5);
+    spawnCrowd(X(88), Z(88), 10, 'loiter', 8, 6);
+    addBox(CX(70, 78), 0.04, CZ(78, 88), W(70, 78), 0.08, W(78, 88), mats.outdoor, { noCollide: true, noShadow: true });
+
+    // Top toilet 85-100, 75-85
+    addBox(CX(85, 100), 0.05, CZ(75, 85), W(85, 100), 0.1, W(75, 85), mats.bathTile, { noShadow: true });
+    addBox(CX(85, 100), 1.4, Z(85), W(85, 100), 2.8, 0.35, mats.bathTile);
+    addBox(CX(85, 100), 1.4, Z(75), W(85, 92), 2.8, 0.35, mats.bathTile);
+    addBox(X(100), 1.4, CZ(75, 85), 0.35, 2.8, W(75, 85), mats.bathTile);
+    addBox(X(85), 1.4, CZ(78, 85), 0.35, 2.8, W(78, 85), mats.bathTile);
+    addBox(X(85), 1.4, CZ(75, 77), 0.35, 2.8, W(75, 77), mats.bathTile);
+    addBox(CX(85, 100), 2.85, CZ(75, 85), W(85, 100), 0.1, W(75, 85), mats.concreteDark, { noShadow: true });
+    {
+      const bathL = new THREE.PointLight(0xfff0dd, 2.4, 9, 2);
+      bathL.position.set(X(92), 2.5, Z(80));
+      scene.add(bathL);
+    }
+    addBox(X(86), 1.5, Z(80), 0.1, 2.4, 3.2, mats.graffiti, { noCollide: true });
+    for (let i = 0; i < 3; i++) addBox(X(90 + i * 2.5), 1.1, Z(78), 0.12, 2.1, 1.0, mats.metal);
+    makeLabel('TOILET', X(92), 3.1, Z(80), 3);
+    spawnCrowd(X(93), Z(80), 3, 'loiter', 3, 2);
+
+    // Studio 75-100, 30-70
+    addBox(CX(75, 100), 0.05, CZ(30, 70), W(75, 100), 0.1, W(30, 70), mats.brickFloor, { noShadow: true });
+    addBox(CX(75, 100), 2, Z(30), W(75, 100), 4, 0.45, mats.brick);
+    addBox(CX(75, 100), 2, Z(70), W(75, 100), 4, 0.45, mats.brick);
+    addBox(X(100), 2, CZ(30, 70), 0.45, 4, W(30, 70), mats.brick);
+    addBox(X(75), 2, CZ(55, 70), 0.45, 4, W(55, 70), mats.brick);
+    addBox(X(75), 2, CZ(30, 40), 0.45, 4, W(30, 40), mats.brick);
+    addBox(CX(75, 100), 4.05, CZ(30, 70), W(75, 100), 0.12, W(30, 70), mats.concreteDark, { noShadow: true });
+    addBox(X(87), 1.5, Z(50), 7, 3, 0.7, mats.concrete, { rotY: Math.PI / 4 });
+    addBox(CX(65, 72), 1.4, CZ(32, 52), W(65, 72), 2.6, W(32, 52), mats.lightAV);
+    glow(X(68), 2.8, Z(42), 0x3366ff, 2.2, 10);
+    makeLabel('LIGHT A/V', X(68), 3.5, Z(42), 2.8);
+    addBox(X(90), 0.85, Z(34), 2.2, 1.5, 1.6, mats.black);
+    makeNPC(X(90), Z(35), { mode: 'idle', color: 0x222228, facing: 0 });
+    addOrangeGrid(X(90), 2.5, Z(31.5), 3, 2);
+    addSpeakerStack(X(84), 0.9, Z(36), 0.2);
+    addSpeakerStack(X(95), 0.9, Z(36), -0.2);
+    for (let i = 0; i < 5; i++) addBox(X(94), 0.15 + i * 0.3, Z(32 + i * 1.1), 4.5, 0.28, 1.0, mats.concrete, { noCollide: true });
+    addSpotBeam(X(82), Z(55)); addSpotBeam(X(92), Z(48)); addSpotBeam(X(85), Z(42));
+    makeLabel('STUDIO', X(88), 3.6, Z(50), 5);
+    spawnCrowd(X(88), Z(52), 22, 'dance', 8, 10);
+    addPipe(X(78), Z(35), X(96), Z(35), 3.7);
+
+    // Bottom toilet corridor 80-85, 0-30 + room 80-100, 0-15
+    addBox(CX(80, 86), 0.05, CZ(5, 32), W(80, 86), 0.1, W(5, 32), mats.brickFloor, { noShadow: true });
+    addBox(X(80), 1.6, CZ(5, 32), 0.4, 3.2, W(5, 32), mats.brick);
+    addBox(X(86), 1.6, CZ(5, 28), 0.4, 3.2, W(5, 28), mats.brick);
+    addBox(CX(80, 86), 3.25, CZ(5, 32), W(80, 86), 0.1, W(5, 32), mats.concreteDark, { noShadow: true });
+    glow(X(83), 2.2, Z(18), 0xff4422, 1.5, 8);
+    makeLabel('TOILET →', X(83), 3.0, Z(20), 2.8);
+    addBox(CX(78, 84), 0.04, CZ(28, 35), W(78, 84), 0.08, W(28, 35), mats.brickFloor, { noCollide: true, noShadow: true });
+
+    addBox(CX(80, 100), 0.05, CZ(0, 15), W(80, 100), 0.1, W(0, 15), mats.bathTile, { noShadow: true });
+    addBox(CX(80, 100), 1.5, Z(0), W(80, 100), 3.0, 0.4, mats.bathTile);
+    addBox(CX(80, 100), 1.5, Z(15), W(80, 94), 3.0, 0.4, mats.bathTile);
+    addBox(X(100), 1.5, CZ(0, 15), 0.4, 3.0, W(0, 15), mats.bathTile);
+    addBox(X(80), 1.5, CZ(0, 10), 0.4, 3.0, W(0, 10), mats.bathTile);
+    addBox(X(80), 1.5, CZ(13, 15), 0.4, 3.0, W(13, 15), mats.bathTile);
+    addBox(CX(80, 100), 3.05, CZ(0, 15), W(80, 100), 0.1, W(0, 15), mats.concreteDark, { noShadow: true });
+    {
+      const bathL2 = new THREE.PointLight(0xfff0dd, 2.6, 10, 2);
+      bathL2.position.set(X(90), 2.6, Z(7));
+      scene.add(bathL2);
+    }
+    addBox(X(81), 1.6, Z(7), 0.12, 2.6, 4, mats.graffiti, { noCollide: true });
+    for (let i = 0; i < 4; i++) addBox(X(86 + (i % 2) * 4), 1.15, Z(4 + Math.floor(i / 2) * 4), 0.12, 2.2, 1.1, mats.metal);
+    makeLabel('BATHROOM · MAD MAX', X(90), 3.3, Z(7), 4.2);
+    spawnCrowd(X(92), Z(8), 6, 'loiter', 5, 3);
+
+    addBox(X(-1), 1.5, CZ(-36, 100), 0.4, 3, W(-36, 100), mats.brick);
+
+    // Spawn south of the queue — clear view of body + gate ahead (no head-in-face)
+    const player = {
+      pos: new THREE.Vector3(X(8.5), 0, Z(-22)),
+      yaw: Math.PI, // face +Z (north) toward gate/ramp
+      pitch: 0.22,  // slight look-down for third-person
+      speed: 6.2,
+      turnSpeed: 2.4,
+      radius: 0.35,
+    };
+
+    // Readable third-person avatar — compact head so it doesn't fill the lens
+    const avatar = new THREE.Group();
+    {
+      const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1a1a22 });
+      const accent = new THREE.MeshLambertMaterial({ color: 0xe10600 });
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.95, 0.3), bodyMat);
+      torso.position.y = 1.0;
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.28, 0.26), mats.skin);
+      head.position.y = 1.68;
+      const hips = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.32, 0.26), bodyMat);
+      hips.position.y = 0.42;
+      const legL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.5, 0.2), bodyMat);
+      legL.position.set(-0.12, 0.25, 0);
+      const legR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.5, 0.2), bodyMat);
+      legR.position.set(0.12, 0.25, 0);
+      const strapL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.65, 0.05), accent);
+      strapL.position.set(-0.12, 1.1, 0.14);
+      strapL.rotation.z = 0.28;
+      const strapR = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.65, 0.05), accent);
+      strapR.position.set(0.12, 1.1, 0.14);
+      strapR.rotation.z = -0.28;
+      const badge = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.04), accent);
+      badge.position.set(0, 1.1, 0.18);
+      avatar.add(torso, head, hips, legL, legR, strapL, strapR, badge);
+      world.add(avatar);
+    }
+
+    const keys = {};
+    addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (e.code === 'Escape') document.exitPointerLock();
+      if (e.code.startsWith('Arrow')) e.preventDefault();
+    });
+    addEventListener('keyup', (e) => { keys[e.code] = false; });
+    addEventListener('mousemove', (e) => {
+      if (document.pointerLockElement !== renderer.domElement) return;
+      // Mouse still yaws for fine look; primary turn is ← →
+      player.yaw -= e.movementX * 0.0022;
+      player.pitch -= e.movementY * 0.0015;
+      player.pitch = Math.max(0.05, Math.min(0.55, player.pitch));
+    });
+    addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+
+    window.__basementCanvas = renderer.domElement;
+    if (window.__basementStarted) {
+      try { renderer.domElement.requestPointerLock(); } catch (e) {}
+    }
+    renderer.domElement.addEventListener('click', () => {
+      if (!window.__basementStarted) {
+        window.__basementStartGame();
+        return;
+      }
+      if (document.pointerLockElement !== renderer.domElement) {
+        try { renderer.domElement.requestPointerLock(); } catch (e) {}
+      }
+    });
+    const enterBtn = document.getElementById('enterBtn');
+    if (enterBtn) {
+      enterBtn.onclick = function (e) {
+        window.__basementStartGame(e);
+        try { renderer.domElement.requestPointerLock(); } catch (err) {}
+      };
+    }
+
+    function collide(nx, nz) {
+      const r = player.radius;
+      const gy = groundY(nx, nz);
+      const yLo = gy + 0.35;
+      const yHi = gy + 2.15;
+      for (const b of colliders) {
+        if (b.max.y < yLo || b.min.y > yHi) continue;
+        const cx = Math.max(b.min.x, Math.min(nx, b.max.x));
+        const cz = Math.max(b.min.z, Math.min(nz, b.max.z));
+        const dx = nx - cx, dz = nz - cz;
+        if (dx * dx + dz * dz < r * r) return true;
+      }
+      return false;
+    }
+
+    let last = performance.now();
+    function tick(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const t = now * 0.001;
+
+      for (const n of npcs) {
+        const g = n.group;
+        if (n.mode === 'dance') {
+          g.position.y = Math.abs(Math.sin(t * n.speed * 3 + n.phase)) * 0.18;
+          g.rotation.y += dt * 0.6;
+          g.children[0].scale.y = 1 + Math.sin(t * n.speed * 4 + n.phase) * 0.06;
+        } else if (n.mode === 'loiter') {
+          g.position.x = n.base.x + Math.sin(t * 0.4 + n.phase) * n.radius;
+          g.position.z = n.base.z + Math.cos(t * 0.35 + n.phase) * n.radius * 0.6;
+          g.rotation.y = Math.atan2(
+            Math.cos(t * 0.4 + n.phase),
+            -Math.sin(t * 0.35 + n.phase)
+          );
+        } else if (n.mode === 'queue') {
+          g.position.y = Math.sin(t * 1.2 + n.phase) * 0.03;
+        }
+      }
+
+      if (window.__basementStarted) {
+        // ← → turn in place (not strafe); ↑ ↓ walk relative to facing
+        if (keys['ArrowLeft']) player.yaw += player.turnSpeed * dt;
+        if (keys['ArrowRight']) player.yaw -= player.turnSpeed * dt;
+
+        const sprint = keys['ShiftLeft'] || keys['ShiftRight'];
+        const sp = player.speed * (sprint ? 1.65 : 1);
+        let move = 0;
+        if (keys['ArrowUp']) move += 1;
+        if (keys['ArrowDown']) move -= 1;
+        if (move) {
+          const forward = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
+          const dx = forward.x * move * sp * dt;
+          const dz = forward.z * move * sp * dt;
+          const nx = player.pos.x + dx;
+          const nz = player.pos.z + dz;
+          if (!collide(nx, player.pos.z)) player.pos.x = nx;
+          if (!collide(player.pos.x, nz)) player.pos.z = nz;
+        }
+      }
+
+      const gy = groundY(player.pos.x, player.pos.z);
+      player.pos.y = gy;
+      avatar.position.set(player.pos.x, gy, player.pos.z);
+      avatar.rotation.y = player.yaw;
+
+      // Third-person follow cam — behind body, look toward gate/queue
+      const camDist = 5.2;
+      const camHeight = 2.85 + player.pitch * 1.1;
+      const camX = player.pos.x + Math.sin(player.yaw) * camDist;
+      const camZ = player.pos.z + Math.cos(player.yaw) * camDist;
+      // Keep camera inside courtyard bounds (don't clip south wall into black)
+      const camZClamped = Math.max(camZ, Z(-34));
+      const camY = gy + camHeight;
+      camera.position.set(camX, camY, camZClamped);
+      camera.lookAt(
+        player.pos.x - Math.sin(player.yaw) * 3.5,
+        gy + 1.15,
+        player.pos.z - Math.cos(player.yaw) * 3.5
+      );
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+    } catch (err) {
+      console.error('Basement 3D init failed', err);
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;left:12px;top:12px;z-index:50;max-width:420px;padding:12px;background:#400;color:#fff;font:13px sans-serif';
+      el.textContent = '3D failed to start: ' + (err && err.message ? err.message : String(err));
+      document.body.appendChild(el);
+    }
+  })();
+  </script>
+</body>
+</html>

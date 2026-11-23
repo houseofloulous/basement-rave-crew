@@ -1,36 +1,29 @@
-# Build pivot — locked
+# Build pivot — locked (free)
 
-## Standing rule
+## Standing rules
 
-**Always pick the more realistic option.**  
-For Basement that means **GTA: San Andreas** (same medium as the [@lop_bln](https://www.instagram.com/reel/DgDlPgNoNDU/) reel), **not** polishing the crude Three.js / GDevelop browser sketch.
+1. **Always pick the more realistic option** among choices that fit the constraints.  
+2. **No paid tools** for this project (user rule). That rules out CrossOver licenses and “buy a stack to play.”
 
-## Product
+## Why GTA SA / CrossOver is paused
+
+- CrossOver trial ends in 14 days, then it’s paid.  
+- Whisky (free) lists classic SA as **unplayable**.  
+- GTA SA itself is a paid Steam game.  
+
+So the reel-accurate SA path is **paused** until there’s a free way to run it. Notes stay in `gta-sa-mod/` for later.
+
+## Current product (free + Mac)
 
 | Layer | Role |
 |-------|------|
-| **GTA SA + CrossOver on Mac** | The real club — characters, lighting, space |
-| **This website** | Door + Mac install guide (`install.html`) |
-| **Old browser walkthrough** | Dead end — not linked from ENTER |
+| **Roblox** | Real club build — free Roblox Studio on Mac, custom avatars, friends join |
+| **This website** | Door + free setup guide (`install.html`) |
+| **Old Three.js sketch** | Dead end (`?sketch=1` only) |
 
-## Mac stack
-
-1. CrossOver → Steam bottle  
-2. GTA: San Andreas  
-3. v1.0 + SilentPatch + ASI + ModLoader  
-4. Ariane for map work  
-5. `gta-sa-mod/` pack → `modloader/BasementRaveCrew/`
-
-See `gta-sa-mod/MAC-SETUP.md`.
-
-## Rejected for realism
-
-- More Three.js box / Mixamo polish  
-- Base44  
-- GDevelop capsule club  
-- “Browser rebuild with one GLB” as a substitute for SA  
+Roblox won’t look identical to a GTA SA mod, but among **$0 Mac** options it’s the one that actually looks like a game with real people — not brown box avatars.
 
 ## Next
 
-1. User: finish Mac checklist until SA launches in CrossOver.  
-2. Us: courtyard block-out in Ariane + textures from `textures-real/`.  
+1. User: free Roblox account + Roblox Studio on Mac (see `roblox/MAC-SETUP.md`).  
+2. Us: place layout (courtyard → ramp → tunnel → floors) + Mad Max crew outfits from your photo refs.  

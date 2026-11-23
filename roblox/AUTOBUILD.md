@@ -12,11 +12,11 @@ You do **not** place parts by hand. Focus: **club realism**. Avatars later.
 6. In **Explorer**, expand **Workspace** → you should see **BasementAuto**
 7. Press **Stop** → **File → Publish to Roblox**
 
-If Play goes black after the gate: re-paste **v2.2** (tunnel mouth was a solid wall — fixed; ramp/tunnel/lockers/baths are lit). Output should say `Realism v2.2 built`.
+If there’s a floor hole before the entrance: re-paste **v2.3** (MouthBridge + extended asphalt/landing). Output: `Realism v2.3 built`.
 
-**Where things are:** after security → **LOCKERS** (side banks, center aisle) → main → hall → **BATHROOMS** (5 open stalls). Follow the glowing floor stripes.
+**Where things are:** after security → **LOCKERS** → main → hall → **BATHROOMS**. Follow the glowing floor stripes.
 
-## What you get (realism v2.2)
+## What you get (realism v2.3)
 
 - Street industrial gate (I-beams, roll-up, fence, corrugated metal)  
 - Courtyard queue + **KNOCKDOWN CENTER** brick facade  

@@ -1,15 +1,14 @@
 --[[
-  Basement Rave Crew — ONE-SHOT AUTO BUILD (club realism pass)
-  ============================================================
-  Focus: industrial club shell that feels like Basement NYC.
-  Avatars / outfits: later — skip for now.
+  Basement Rave Crew — ONE-SHOT AUTO BUILD (realism v2)
+  =====================================================
+  Club shell only — avatars deferred.
 
-  Studio (Mac):
-  1. New → Baseplate
-  2. ServerScriptService → + → Script → paste THIS ENTIRE FILE
-  3. Play ▶ once → Stop → Publish as "Basement Rave Crew"
+  Studio:
+  1. New → Baseplate  (or re-paste into existing Script)
+  2. ServerScriptService → Script → paste THIS ENTIRE FILE
+  3. Play ▶ once → Stop → Publish
 
-  Safe to re-run: wipes Workspace.BasementAuto first.
+  Re-run safe: wipes Workspace.BasementAuto + prior lighting FX.
 ]]
 
 local Workspace = game:GetService("Workspace")
@@ -20,7 +19,6 @@ local ROOT_NAME = "BasementAuto"
 local old = Workspace:FindFirstChild(ROOT_NAME)
 if old then old:Destroy() end
 
--- Clear leftover lighting effects from prior runs
 for _, child in ipairs(Lighting:GetChildren()) do
 	if child:IsA("Atmosphere")
 		or child:IsA("ColorCorrectionEffect")
@@ -68,8 +66,8 @@ local function sign(parentPart, text, face, textColor, bgColor)
 	local gui = Instance.new("SurfaceGui")
 	gui.Name = "Sign"
 	gui.Face = face or Enum.NormalId.Front
-	gui.CanvasSize = Vector2.new(512, 256)
-	gui.LightInfluence = 0.2
+	gui.CanvasSize = Vector2.new(800, 320)
+	gui.LightInfluence = 0.15
 	gui.Parent = parentPart
 	local frame = Instance.new("Frame")
 	frame.Size = UDim2.fromScale(1, 1)
@@ -77,7 +75,8 @@ local function sign(parentPart, text, face, textColor, bgColor)
 	frame.BorderSizePixel = 0
 	frame.Parent = gui
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.fromScale(1, 1)
+	label.Size = UDim2.fromScale(0.94, 0.9)
+	label.Position = UDim2.fromScale(0.03, 0.05)
 	label.BackgroundTransparency = 1
 	label.Text = text
 	label.TextColor3 = textColor or Color3.fromRGB(255, 240, 235)
@@ -87,87 +86,78 @@ local function sign(parentPart, text, face, textColor, bgColor)
 	return gui
 end
 
-local function beam(fromPos, toPos, color, thickness)
-	-- simple structural beam as a long part between two points
-	local mid = (fromPos + toPos) / 2
-	local delta = toPos - fromPos
-	local len = delta.Magnitude
-	local p = part({
-		Name = "Beam",
-		Size = Vector3.new(thickness or 0.6, thickness or 0.6, len),
-		CFrame = CFrame.lookAt(mid, toPos),
-		Color = color or Color3.fromRGB(55, 55, 58),
-		Material = Enum.Material.Metal,
-	})
-	return p
-end
-
--- Palette (industrial Basement night)
-local COL_ASPHALT = Color3.fromRGB(38, 38, 40)
-local COL_BRICK = Color3.fromRGB(112, 64, 50)
-local COL_BRICK_DARK = Color3.fromRGB(78, 48, 40)
-local COL_CONCRETE = Color3.fromRGB(148, 142, 132)
-local COL_CONCRETE_DARK = Color3.fromRGB(92, 88, 82)
-local COL_SLATE = Color3.fromRGB(70, 68, 72)
-local COL_METAL = Color3.fromRGB(58, 58, 62)
-local COL_RUST = Color3.fromRGB(110, 70, 45)
-local COL_RED = Color3.fromRGB(220, 8, 0)
-local COL_BLACK = Color3.fromRGB(18, 18, 22)
-local COL_FLOOR = Color3.fromRGB(62, 42, 38)
-local COL_TILE = Color3.fromRGB(210, 205, 195)
-local COL_GRAVEL = Color3.fromRGB(95, 90, 80)
-local COL_WHITE = Color3.fromRGB(235, 233, 228)
-local COL_ORANGE = Color3.fromRGB(255, 110, 35)
+-- Palette
+local COL_ASPHALT = Color3.fromRGB(36, 36, 38)
+local COL_BRICK = Color3.fromRGB(118, 62, 48)
+local COL_BRICK_DARK = Color3.fromRGB(72, 42, 36)
+local COL_BRICK_AGED = Color3.fromRGB(98, 55, 44)
+local COL_CONCRETE = Color3.fromRGB(155, 148, 138)
+local COL_CONCRETE_DARK = Color3.fromRGB(88, 84, 78)
+local COL_CONCRETE_PALE = Color3.fromRGB(175, 170, 160)
+local COL_SLATE = Color3.fromRGB(68, 66, 70)
+local COL_METAL = Color3.fromRGB(55, 55, 60)
+local COL_METAL_DK = Color3.fromRGB(32, 32, 36)
+local COL_RUST = Color3.fromRGB(118, 72, 42)
+local COL_CORRUGATED = Color3.fromRGB(70, 72, 75)
+local COL_RED = Color3.fromRGB(210, 6, 0)
+local COL_RED_DEEP = Color3.fromRGB(140, 8, 12)
+local COL_BLACK = Color3.fromRGB(14, 14, 18)
+local COL_FLOOR = Color3.fromRGB(58, 38, 34)
+local COL_TILE = Color3.fromRGB(218, 212, 200)
+local COL_GRAVEL = Color3.fromRGB(98, 92, 82)
+local COL_WHITE = Color3.fromRGB(238, 236, 230)
+local COL_ORANGE = Color3.fromRGB(255, 105, 28)
+local COL_AMBER = Color3.fromRGB(255, 160, 50)
 
 ----------------------------------------------------------------
--- LIGHTING / ATMOSPHERE (club haze, not daylight baseplate)
+-- LIGHTING / ATMOSPHERE
 ----------------------------------------------------------------
-Lighting.Ambient = Color3.fromRGB(22, 14, 24)
-Lighting.OutdoorAmbient = Color3.fromRGB(28, 22, 36)
-Lighting.Brightness = 0.85
-Lighting.ClockTime = 0.5
+Lighting.Ambient = Color3.fromRGB(18, 10, 20)
+Lighting.OutdoorAmbient = Color3.fromRGB(24, 18, 32)
+Lighting.Brightness = 0.7
+Lighting.ClockTime = 0.4
 Lighting.GeographicLatitude = 40
-Lighting.FogColor = Color3.fromRGB(10, 6, 14)
-Lighting.FogStart = 30
-Lighting.FogEnd = 160
+Lighting.FogColor = Color3.fromRGB(8, 4, 12)
+Lighting.FogStart = 22
+Lighting.FogEnd = 140
 Lighting.GlobalShadows = true
-Lighting.EnvironmentDiffuseScale = 0.35
-Lighting.EnvironmentSpecularScale = 0.2
+Lighting.EnvironmentDiffuseScale = 0.28
+Lighting.EnvironmentSpecularScale = 0.15
 
 local atmosphere = Instance.new("Atmosphere")
-atmosphere.Density = 0.38
-atmosphere.Offset = 0.15
-atmosphere.Color = Color3.fromRGB(55, 28, 40)
-atmosphere.Decay = Color3.fromRGB(18, 8, 14)
-atmosphere.Glare = 0.15
-atmosphere.Haze = 2.4
+atmosphere.Density = 0.42
+atmosphere.Offset = 0.12
+atmosphere.Color = Color3.fromRGB(60, 22, 35)
+atmosphere.Decay = Color3.fromRGB(14, 5, 10)
+atmosphere.Glare = 0.12
+atmosphere.Haze = 2.8
 atmosphere.Parent = Lighting
 
 local cc = Instance.new("ColorCorrectionEffect")
 cc.Name = "BasementCC"
-cc.TintColor = Color3.fromRGB(255, 205, 205)
-cc.Brightness = -0.04
-cc.Contrast = 0.12
-cc.Saturation = 0.08
+cc.TintColor = Color3.fromRGB(255, 195, 195)
+cc.Brightness = -0.06
+cc.Contrast = 0.16
+cc.Saturation = 0.1
 cc.Parent = Lighting
 
 local bloom = Instance.new("BloomEffect")
 bloom.Name = "BasementBloom"
-bloom.Intensity = 0.55
-bloom.Size = 28
-bloom.Threshold = 0.85
+bloom.Intensity = 0.7
+bloom.Size = 32
+bloom.Threshold = 0.78
 bloom.Parent = Lighting
 
 local dof = Instance.new("DepthOfFieldEffect")
 dof.Name = "BasementDOF"
-dof.FarIntensity = 0.18
-dof.NearIntensity = 0.05
-dof.FocusDistance = 28
-dof.InFocusRadius = 22
+dof.FarIntensity = 0.22
+dof.NearIntensity = 0.04
+dof.FocusDistance = 24
+dof.InFocusRadius = 18
 dof.Parent = Lighting
 
 ----------------------------------------------------------------
--- HELPERS: room shell (floor / 4 walls with door gaps / ceiling)
+-- ROOM SHELL HELPER
 ----------------------------------------------------------------
 local function roomShell(opts)
 	local folder = Instance.new("Folder")
@@ -183,6 +173,7 @@ local function roomShell(opts)
 	local wallMat = opts.WallMaterial or Enum.Material.Brick
 	local ceilColor = opts.CeilColor or COL_CONCRETE_DARK
 	local ceilY = cy + sy
+	local gaps = opts.DoorGaps or {}
 
 	part({
 		Name = "Floor",
@@ -201,10 +192,6 @@ local function roomShell(opts)
 		Parent = folder,
 	})
 
-	-- Walls: North (+Z), South (-Z), West (-X), East (+X)
-	-- DoorGaps: { N = width, S = width, W = width, E = width } — centered gap
-	local gaps = opts.DoorGaps or {}
-
 	local function wallWithGap(name, fullSize, fullPos, axis, gapW)
 		if not gapW or gapW <= 0 then
 			part({
@@ -217,16 +204,13 @@ local function roomShell(opts)
 			})
 			return
 		end
-		-- split into two panels along the long horizontal axis
 		if axis == "X" then
 			local total = fullSize.X
 			local side = (total - gapW) / 2
-			local leftX = fullPos.X - (gapW / 2 + side / 2)
-			local rightX = fullPos.X + (gapW / 2 + side / 2)
 			part({
 				Name = name .. "L",
 				Size = Vector3.new(side, fullSize.Y, fullSize.Z),
-				Position = Vector3.new(leftX, fullPos.Y, fullPos.Z),
+				Position = Vector3.new(fullPos.X - (gapW / 2 + side / 2), fullPos.Y, fullPos.Z),
 				Color = wallColor,
 				Material = wallMat,
 				Parent = folder,
@@ -234,29 +218,26 @@ local function roomShell(opts)
 			part({
 				Name = name .. "R",
 				Size = Vector3.new(side, fullSize.Y, fullSize.Z),
-				Position = Vector3.new(rightX, fullPos.Y, fullPos.Z),
+				Position = Vector3.new(fullPos.X + (gapW / 2 + side / 2), fullPos.Y, fullPos.Z),
 				Color = wallColor,
 				Material = wallMat,
 				Parent = folder,
 			})
-			-- lintel
 			part({
 				Name = name .. "Lintel",
-				Size = Vector3.new(gapW + 1, 1.5, fullSize.Z),
-				Position = Vector3.new(fullPos.X, fullPos.Y + fullSize.Y / 2 - 0.75, fullPos.Z),
+				Size = Vector3.new(gapW + 1, 1.8, fullSize.Z + 0.4),
+				Position = Vector3.new(fullPos.X, fullPos.Y + fullSize.Y / 2 - 0.9, fullPos.Z),
 				Color = COL_METAL,
 				Material = Enum.Material.Metal,
 				Parent = folder,
 			})
-		else -- Z
+		else
 			local total = fullSize.Z
 			local side = (total - gapW) / 2
-			local nearZ = fullPos.Z - (gapW / 2 + side / 2)
-			local farZ = fullPos.Z + (gapW / 2 + side / 2)
 			part({
 				Name = name .. "A",
 				Size = Vector3.new(fullSize.X, fullSize.Y, side),
-				Position = Vector3.new(fullPos.X, fullPos.Y, nearZ),
+				Position = Vector3.new(fullPos.X, fullPos.Y, fullPos.Z - (gapW / 2 + side / 2)),
 				Color = wallColor,
 				Material = wallMat,
 				Parent = folder,
@@ -264,15 +245,15 @@ local function roomShell(opts)
 			part({
 				Name = name .. "B",
 				Size = Vector3.new(fullSize.X, fullSize.Y, side),
-				Position = Vector3.new(fullPos.X, fullPos.Y, farZ),
+				Position = Vector3.new(fullPos.X, fullPos.Y, fullPos.Z + (gapW / 2 + side / 2)),
 				Color = wallColor,
 				Material = wallMat,
 				Parent = folder,
 			})
 			part({
 				Name = name .. "Lintel",
-				Size = Vector3.new(fullSize.X, 1.5, gapW + 1),
-				Position = Vector3.new(fullPos.X, fullPos.Y + fullSize.Y / 2 - 0.75, fullPos.Z),
+				Size = Vector3.new(fullSize.X + 0.4, 1.8, gapW + 1),
+				Position = Vector3.new(fullPos.X, fullPos.Y + fullSize.Y / 2 - 0.9, fullPos.Z),
 				Color = COL_METAL,
 				Material = Enum.Material.Metal,
 				Parent = folder,
@@ -282,29 +263,38 @@ local function roomShell(opts)
 
 	local wallH = sy - 0.5
 	local wallY = cy + wallH / 2 + 0.5
-
 	wallWithGap("WallN", Vector3.new(sx, wallH, wallT), Vector3.new(cx, wallY, cz + sz / 2), "X", gaps.N)
 	wallWithGap("WallS", Vector3.new(sx, wallH, wallT), Vector3.new(cx, wallY, cz - sz / 2), "X", gaps.S)
 	wallWithGap("WallW", Vector3.new(wallT, wallH, sz), Vector3.new(cx - sx / 2, wallY, cz), "Z", gaps.W)
 	wallWithGap("WallE", Vector3.new(wallT, wallH, sz), Vector3.new(cx + sx / 2, wallY, cz), "Z", gaps.E)
 
-	-- ceiling pipes / beams for industrial density
 	if opts.Pipes ~= false then
 		for i = -2, 2 do
 			part({
 				Name = "Pipe",
-				Size = Vector3.new(0.7, 0.7, sz * 0.85),
-				Position = Vector3.new(cx + i * (sx / 6), ceilY - 1.2, cz),
-				Color = COL_RUST,
+				Size = Vector3.new(0.85, 0.85, sz * 0.82),
+				Position = Vector3.new(cx + i * (sx / 6), ceilY - 1.4, cz),
+				Color = (i % 2 == 0) and COL_RUST or COL_METAL,
 				Material = Enum.Material.CorrodedMetal,
+				Parent = folder,
+			})
+		end
+		-- cross conduits
+		for i = -1, 1 do
+			part({
+				Name = "Conduit",
+				Size = Vector3.new(sx * 0.75, 0.45, 0.45),
+				Position = Vector3.new(cx, ceilY - 2.6, cz + i * (sz / 5)),
+				Color = COL_METAL_DK,
+				Material = Enum.Material.Metal,
 				Parent = folder,
 			})
 		end
 		for i = -1, 1 do
 			part({
 				Name = "IBeam",
-				Size = Vector3.new(sx * 0.9, 0.8, 0.8),
-				Position = Vector3.new(cx, ceilY - 2.2, cz + i * (sz / 4)),
+				Size = Vector3.new(sx * 0.92, 1.0, 0.9),
+				Position = Vector3.new(cx, ceilY - 3.4, cz + i * (sz / 3.5)),
 				Color = COL_METAL,
 				Material = Enum.Material.Metal,
 				Parent = folder,
@@ -316,7 +306,160 @@ local function roomShell(opts)
 end
 
 ----------------------------------------------------------------
--- 1. COURTYARD (street / queue / gate)
+-- 1. STREET GATE (Knockdown industrial portal)
+----------------------------------------------------------------
+local street = Instance.new("Folder")
+street.Name = "StreetGate"
+street.Parent = root
+
+-- Sidewalk strip south of gate
+part({
+	Name = "Sidewalk",
+	Size = Vector3.new(70, 0.8, 18),
+	Position = Vector3.new(0, 0.4, -62),
+	Color = COL_CONCRETE_PALE,
+	Material = Enum.Material.Concrete,
+	Parent = street,
+})
+part({
+	Name = "StreetAsphalt",
+	Size = Vector3.new(90, 1, 22),
+	Position = Vector3.new(0, 0.5, -78),
+	Color = COL_ASPHALT,
+	Material = Enum.Material.Asphalt,
+	Parent = street,
+})
+
+-- Bollards + hydrant
+for _, x in ipairs({ -14, -10, 10, 14 }) do
+	part({
+		Name = "Bollard",
+		Size = Vector3.new(1.2, 2.4, 1.2),
+		Position = Vector3.new(x, 1.6, -54),
+		Color = COL_CONCRETE,
+		Material = Enum.Material.Concrete,
+		Parent = street,
+	})
+end
+part({
+	Name = "Hydrant",
+	Size = Vector3.new(1.4, 2.2, 1.4),
+	Position = Vector3.new(-18, 1.5, -56),
+	Color = COL_METAL_DK,
+	Material = Enum.Material.Metal,
+	Parent = street,
+})
+
+-- Steel I-beam portal frame (~20 stud opening)
+local gateZ = -48
+local openingW = 20
+-- Vertical I-beams (flange + web approximated as thick posts)
+for _, x in ipairs({ -openingW / 2 - 1.5, openingW / 2 + 1.5 }) do
+	part({
+		Name = "IBeamPost",
+		Size = Vector3.new(2.2, 22, 2.2),
+		Position = Vector3.new(x, 11.5, gateZ),
+		Color = COL_METAL,
+		Material = Enum.Material.Metal,
+		Parent = street,
+	})
+	part({
+		Name = "IBeamFlange",
+		Size = Vector3.new(3.4, 22, 0.6),
+		Position = Vector3.new(x, 11.5, gateZ - 1.2),
+		Color = COL_RUST,
+		Material = Enum.Material.CorrodedMetal,
+		Parent = street,
+	})
+end
+-- Crossbeams
+part({
+	Name = "GateHeader",
+	Size = Vector3.new(openingW + 8, 2.2, 2.4),
+	Position = Vector3.new(0, 22, gateZ),
+	Color = COL_METAL,
+	Material = Enum.Material.Metal,
+	Parent = street,
+})
+part({
+	Name = "GateHeader2",
+	Size = Vector3.new(openingW + 6, 1.4, 2.0),
+	Position = Vector3.new(0, 19.5, gateZ),
+	Color = COL_RUST,
+	Material = Enum.Material.CorrodedMetal,
+	Parent = street,
+})
+-- Roll-up shutter (open — corrugated panel tucked up)
+for i = 0, 5 do
+	part({
+		Name = "RollUp",
+		Size = Vector3.new(openingW - 1, 0.55, 0.4),
+		Position = Vector3.new(0, 17.5 - i * 0.55, gateZ + 0.8),
+		Color = COL_CORRUGATED,
+		Material = Enum.Material.Metal,
+		Parent = street,
+	})
+end
+-- Corrugated metal wall right of gate
+for i = 0, 11 do
+	part({
+		Name = "CorrPanel",
+		Size = Vector3.new(2.8, 16, 0.35),
+		Position = Vector3.new(14 + i * 2.9, 8.5, gateZ),
+		Color = COL_CORRUGATED,
+		Material = Enum.Material.DiamondPlate,
+		Parent = street,
+	})
+end
+-- Iron fence pickets left of gate
+for i = 0, 18 do
+	part({
+		Name = "Picket",
+		Size = Vector3.new(0.25, 10, 0.25),
+		Position = Vector3.new(-12 - i * 1.4, 5.5, gateZ),
+		Color = COL_BLACK,
+		Material = Enum.Material.Metal,
+		Parent = street,
+	})
+	part({
+		Name = "PicketTip",
+		Size = Vector3.new(0.35, 0.8, 0.35),
+		Position = Vector3.new(-12 - i * 1.4, 11, gateZ),
+		Color = COL_BLACK,
+		Material = Enum.Material.Metal,
+		Parent = street,
+	})
+end
+part({
+	Name = "FenceRail",
+	Size = Vector3.new(28, 0.3, 0.3),
+	Position = Vector3.new(-26, 8, gateZ),
+	Color = COL_BLACK,
+	Material = Enum.Material.Metal,
+	Parent = street,
+})
+-- Security cams
+for _, x in ipairs({ -12, 12 }) do
+	part({
+		Name = "CamArm",
+		Size = Vector3.new(0.3, 0.3, 2),
+		Position = Vector3.new(x, 20.5, gateZ - 1),
+		Color = COL_METAL_DK,
+		Material = Enum.Material.Metal,
+		Parent = street,
+	})
+	part({
+		Name = "Cam",
+		Size = Vector3.new(0.8, 0.6, 1.2),
+		Position = Vector3.new(x, 20.5, gateZ - 2.2),
+		Color = COL_BLACK,
+		Material = Enum.Material.SmoothPlastic,
+		Parent = street,
+	})
+end
+
+----------------------------------------------------------------
+-- 2. COURTYARD (inside gate → brick warehouse + ramp mouth)
 ----------------------------------------------------------------
 local yard = Instance.new("Folder")
 yard.Name = "Courtyard"
@@ -324,96 +467,220 @@ yard.Parent = root
 
 part({
 	Name = "Asphalt",
-	Size = Vector3.new(90, 1, 100),
-	Position = Vector3.new(0, 0.5, 0),
+	Size = Vector3.new(90, 1, 88),
+	Position = Vector3.new(0, 0.5, -2),
 	Color = COL_ASPHALT,
 	Material = Enum.Material.Asphalt,
 	Parent = yard,
 })
--- curb strips
-part({ Name = "CurbW", Size = Vector3.new(1.2, 0.6, 100), Position = Vector3.new(-44, 1.1, 0), Color = COL_CONCRETE, Material = Enum.Material.Concrete, Parent = yard })
-part({ Name = "CurbE", Size = Vector3.new(1.2, 0.6, 100), Position = Vector3.new(44, 1.1, 0), Color = COL_CONCRETE, Material = Enum.Material.Concrete, Parent = yard })
+-- asphalt patches
+for _, pos in ipairs({
+	Vector3.new(-18, 1.05, -20),
+	Vector3.new(12, 1.05, 5),
+	Vector3.new(-8, 1.05, 15),
+}) do
+	part({
+		Name = "Patch",
+		Size = Vector3.new(10, 0.12, 6),
+		Position = pos,
+		Color = Color3.fromRGB(55, 52, 48),
+		Material = Enum.Material.Asphalt,
+		CanCollide = false,
+		Parent = yard,
+	})
+end
 
--- Brick perimeter (open toward +Z gate)
-part({ Name = "WallS", Size = Vector3.new(90, 20, 2.5), Position = Vector3.new(0, 10.5, -50), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = yard })
-part({ Name = "WallW", Size = Vector3.new(2.5, 20, 100), Position = Vector3.new(-45, 10.5, 0), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = yard })
-part({ Name = "WallE", Size = Vector3.new(2.5, 20, 100), Position = Vector3.new(45, 10.5, 0), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = yard })
--- coping
-part({ Name = "CopeS", Size = Vector3.new(92, 0.8, 3.2), Position = Vector3.new(0, 20.8, -50), Color = COL_CONCRETE, Material = Enum.Material.Concrete, Parent = yard })
-part({ Name = "CopeW", Size = Vector3.new(3.2, 0.8, 100), Position = Vector3.new(-45, 20.8, 0), Color = COL_CONCRETE, Material = Enum.Material.Concrete, Parent = yard })
-part({ Name = "CopeE", Size = Vector3.new(3.2, 0.8, 100), Position = Vector3.new(45, 20.8, 0), Color = COL_CONCRETE, Material = Enum.Material.Concrete, Parent = yard })
+-- Perimeter brick
+part({ Name = "WallW", Size = Vector3.new(2.5, 18, 90), Position = Vector3.new(-45, 9.5, -2), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = yard })
+part({ Name = "WallE", Size = Vector3.new(2.5, 18, 90), Position = Vector3.new(45, 9.5, -2), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = yard })
 
--- Industrial gate facade
-part({ Name = "GateL", Size = Vector3.new(32, 20, 3), Position = Vector3.new(-26, 10.5, 48), Color = COL_CONCRETE_DARK, Material = Enum.Material.Concrete, Parent = yard })
-part({ Name = "GateR", Size = Vector3.new(32, 20, 3), Position = Vector3.new(26, 10.5, 48), Color = COL_CONCRETE_DARK, Material = Enum.Material.Concrete, Parent = yard })
-part({ Name = "GateLintel", Size = Vector3.new(22, 3, 3.5), Position = Vector3.new(0, 19, 48), Color = COL_METAL, Material = Enum.Material.Metal, Parent = yard })
--- rusted door leaves (open / ajar feel — partial)
-part({ Name = "GateLeafL", Size = Vector3.new(8, 16, 0.6), Position = Vector3.new(-9, 9, 46.5), Color = COL_RUST, Material = Enum.Material.CorrodedMetal, Parent = yard })
-part({ Name = "GateLeafR", Size = Vector3.new(8, 16, 0.6), Position = Vector3.new(9, 9, 46.5), Color = COL_RUST, Material = Enum.Material.CorrodedMetal, Parent = yard })
-local gateSign = part({
-	Name = "GateSign",
-	Size = Vector3.new(14, 3, 0.4),
-	Position = Vector3.new(0, 16.5, 46.2),
-	Color = COL_BLACK,
-	Material = Enum.Material.SmoothPlastic,
-	CanCollide = false,
-	Parent = yard,
-})
-sign(gateSign, "BASEMENT", Enum.NormalId.Front, COL_RED, COL_BLACK)
-
--- Red VIP carpet into gate
+-- Red VIP carpet / queue
 part({
 	Name = "RedCarpet",
-	Size = Vector3.new(12, 0.15, 55),
-	Position = Vector3.new(0, 1.08, 12),
+	Size = Vector3.new(11, 0.12, 50),
+	Position = Vector3.new(0, 1.06, -8),
 	Color = COL_RED,
 	Material = Enum.Material.Fabric,
 	CanCollide = false,
 	Parent = yard,
 })
-
--- Queue stanchions + rope bars
 for i = 0, 9 do
-	local z = -18 + i * 6
-	local sl = part({ Name = "StanchionL", Size = Vector3.new(0.5, 3.2, 0.5), Position = Vector3.new(-6.5, 2.6, z), Color = COL_BLACK, Material = Enum.Material.Metal, Parent = yard })
-	local sr = part({ Name = "StanchionR", Size = Vector3.new(0.5, 3.2, 0.5), Position = Vector3.new(6.5, 2.6, z), Color = COL_BLACK, Material = Enum.Material.Metal, Parent = yard })
-	part({ Name = "RopeL", Size = Vector3.new(0.15, 0.15, 5.5), Position = Vector3.new(-6.5, 3.8, z + 3), Color = COL_RED, Material = Enum.Material.Fabric, CanCollide = false, Parent = yard })
-	part({ Name = "RopeR", Size = Vector3.new(0.15, 0.15, 5.5), Position = Vector3.new(6.5, 3.8, z + 3), Color = COL_RED, Material = Enum.Material.Fabric, CanCollide = false, Parent = yard })
-	-- caps
-	part({ Name = "CapL", Size = Vector3.new(0.7, 0.25, 0.7), Position = Vector3.new(-6.5, 4.3, z), Color = COL_METAL, Material = Enum.Material.Metal, Parent = yard })
-	part({ Name = "CapR", Size = Vector3.new(0.7, 0.25, 0.7), Position = Vector3.new(6.5, 4.3, z), Color = COL_METAL, Material = Enum.Material.Metal, Parent = yard })
+	local z = -28 + i * 5.5
+	part({ Name = "StanchionL", Size = Vector3.new(0.45, 3.2, 0.45), Position = Vector3.new(-6, 2.6, z), Color = COL_BLACK, Material = Enum.Material.Metal, Parent = yard })
+	part({ Name = "StanchionR", Size = Vector3.new(0.45, 3.2, 0.45), Position = Vector3.new(6, 2.6, z), Color = COL_BLACK, Material = Enum.Material.Metal, Parent = yard })
+	part({ Name = "RopeL", Size = Vector3.new(0.12, 0.12, 5), Position = Vector3.new(-6, 3.9, z + 2.5), Color = COL_RED, Material = Enum.Material.Fabric, CanCollide = false, Parent = yard })
+	part({ Name = "RopeR", Size = Vector3.new(0.12, 0.12, 5), Position = Vector3.new(6, 3.9, z + 2.5), Color = COL_RED, Material = Enum.Material.Fabric, CanCollide = false, Parent = yard })
 end
 
--- Yard sodium lights
-for _, x in ipairs({ -22, 22 }) do
-	part({ Name = "Pole", Size = Vector3.new(0.55, 16, 0.55), Position = Vector3.new(x, 8.5, -8), Color = COL_METAL, Material = Enum.Material.Metal, Parent = yard })
+-- Sodium yard lights
+for _, x in ipairs({ -24, 24 }) do
+	part({ Name = "Pole", Size = Vector3.new(0.5, 15, 0.5), Position = Vector3.new(x, 8, -25), Color = COL_METAL, Material = Enum.Material.Metal, Parent = yard })
 	local bulb = part({
 		Name = "Sodium",
-		Size = Vector3.new(1.4, 1.4, 1.4),
-		Position = Vector3.new(x, 16.8, -8),
-		Color = Color3.fromRGB(255, 150, 70),
+		Size = Vector3.new(1.5, 1.5, 1.5),
+		Position = Vector3.new(x, 16, -25),
+		Color = COL_AMBER,
 		Material = Enum.Material.Neon,
 		CanCollide = false,
 		Parent = yard,
 	})
-	light(bulb, Color3.fromRGB(255, 145, 70), 3.2, 55)
+	light(bulb, COL_AMBER, 3.5, 60)
 end
 
--- Dumpster / industrial clutter
-part({ Name = "Dumpster", Size = Vector3.new(8, 5, 5), Position = Vector3.new(-32, 3.5, -30), Color = COL_SLATE, Material = Enum.Material.Metal, Parent = yard })
-part({ Name = "PalletStack", Size = Vector3.new(4, 3, 4), Position = Vector3.new(34, 2.5, -22), Color = Color3.fromRGB(120, 90, 50), Material = Enum.Material.Wood, Parent = yard })
+-- Dumpster / clutter
+part({ Name = "Dumpster", Size = Vector3.new(9, 5.5, 5.5), Position = Vector3.new(-34, 3.5, -28), Color = COL_SLATE, Material = Enum.Material.Metal, Parent = yard })
+part({ Name = "Pallets", Size = Vector3.new(5, 3.5, 4), Position = Vector3.new(36, 2.5, -18), Color = Color3.fromRGB(110, 85, 50), Material = Enum.Material.Wood, Parent = yard })
+
+-- Brick warehouse facade (north of courtyard, above ramp mouth)
+local facadeZ = 40
+part({
+	Name = "WarehouseFace",
+	Size = Vector3.new(70, 22, 3),
+	Position = Vector3.new(0, 14, facadeZ),
+	Color = COL_BRICK_AGED,
+	Material = Enum.Material.Brick,
+	Parent = yard,
+})
+-- Windows
+for i = 0, 4 do
+	local x = -24 + i * 12
+	if math.abs(x) > 8 then
+		part({
+			Name = "Window",
+			Size = Vector3.new(7, 5, 0.4),
+			Position = Vector3.new(x, 14, facadeZ - 1.6),
+			Color = Color3.fromRGB(30, 35, 45),
+			Material = Enum.Material.Glass,
+			Transparency = 0.35,
+			Reflectance = 0.15,
+			Parent = yard,
+		})
+		part({
+			Name = "WindowFrame",
+			Size = Vector3.new(7.4, 5.4, 0.5),
+			Position = Vector3.new(x, 14, facadeZ - 1.4),
+			Color = COL_METAL_DK,
+			Material = Enum.Material.Metal,
+			CanCollide = false,
+			Parent = yard,
+		})
+	end
+end
+-- KNOCKDOWN CENTER sign on brick
+local kdSign = part({
+	Name = "KnockdownSign",
+	Size = Vector3.new(28, 5, 0.5),
+	Position = Vector3.new(0, 24, facadeZ - 1.8),
+	Color = COL_WHITE,
+	Material = Enum.Material.SmoothPlastic,
+	Parent = yard,
+})
+sign(kdSign, "KNOCKDOWN CENTER\nWELCOME", Enum.NormalId.Front, COL_BLACK, COL_WHITE)
+
+-- Ramp mouth opening in facade (center)
+-- (walls left/right of opening already from WarehouseFace split conceptually — cut gap with side pillars)
+part({
+	Name = "RampMouthL",
+	Size = Vector3.new(22, 14, 3),
+	Position = Vector3.new(-20, 7.5, facadeZ),
+	Color = COL_BRICK_AGED,
+	Material = Enum.Material.Brick,
+	Parent = yard,
+})
+part({
+	Name = "RampMouthR",
+	Size = Vector3.new(22, 14, 3),
+	Position = Vector3.new(20, 7.5, facadeZ),
+	Color = COL_BRICK_AGED,
+	Material = Enum.Material.Brick,
+	Parent = yard,
+})
+-- Hide solid center of WarehouseFace at low level by overlapping pale concrete reveal
+part({
+	Name = "RampReveal",
+	Size = Vector3.new(18, 12, 0.5),
+	Position = Vector3.new(0, 6.5, facadeZ - 1.2),
+	Color = COL_CONCRETE_PALE,
+	Material = Enum.Material.Concrete,
+	CanCollide = false,
+	Transparency = 1,
+	Parent = yard,
+})
+-- Actually carve walkable opening: destroy collision in center by not having low wall —
+-- WarehouseFace is full width; punch opening with CanCollide false hole + side walls only below:
+-- Replace: make WarehouseFace only above lintel
+-- Fix: remove full face low section — rebuild as upper band only
+-- (WarehouseFace stays as upper mass; RampMouth L/R form sides; opening is empty 18 studs)
+
+-- Upper facade band (above opening)
+part({
+	Name = "FacadeLintelBand",
+	Size = Vector3.new(70, 10, 3),
+	Position = Vector3.new(0, 19, facadeZ),
+	Color = COL_BRICK_AGED,
+	Material = Enum.Material.Brick,
+	Parent = yard,
+})
+-- Make the earlier full WarehouseFace non-collide / invisible so opening works
+-- (Can't edit after — rebuild approach: hide first WarehouseFace)
+do
+	local face = yard:FindFirstChild("WarehouseFace")
+	if face then
+		face.Transparency = 1
+		face.CanCollide = false
+	end
+end
+
+-- Roof planter + rail above tunnel (from ramp photo)
+part({
+	Name = "RoofRail",
+	Size = Vector3.new(20, 1.2, 0.3),
+	Position = Vector3.new(-8, 26, facadeZ - 2),
+	Color = COL_METAL,
+	Material = Enum.Material.Metal,
+	Parent = yard,
+})
+part({
+	Name = "Planter",
+	Size = Vector3.new(8, 2, 3),
+	Position = Vector3.new(-8, 24, facadeZ - 3),
+	Color = Color3.fromRGB(50, 40, 30),
+	Material = Enum.Material.Wood,
+	Parent = yard,
+})
+part({
+	Name = "Foliage",
+	Size = Vector3.new(7, 2.5, 2.5),
+	Position = Vector3.new(-8, 26, facadeZ - 3),
+	Color = Color3.fromRGB(40, 80, 45),
+	Material = Enum.Material.Grass,
+	CanCollide = false,
+	Parent = yard,
+})
+
+-- Smokestack silhouette
+part({
+	Name = "Stack",
+	Size = Vector3.new(4, 40, 4),
+	Position = Vector3.new(-32, 30, facadeZ + 8),
+	Color = COL_BRICK_DARK,
+	Material = Enum.Material.Brick,
+	Parent = yard,
+})
 
 ----------------------------------------------------------------
--- 2. RAMP + TUNNEL
+-- 3. RAMP (tall cast-concrete walls + pipe rails → black mouth)
 ----------------------------------------------------------------
 local rampFolder = Instance.new("Folder")
 rampFolder.Name = "RampTunnel"
 rampFolder.Parent = root
 
-local rampSteps = 14
-local rampDrop = 16
-local rampStartZ = 50
-local rampLen = 42
+local rampSteps = 16
+local rampDrop = 18
+local rampStartZ = 42
+local rampLen = 48
+local rampWidth = 16
+
 for i = 0, rampSteps - 1 do
 	local t0 = i / rampSteps
 	local t1 = (i + 1) / rampSteps
@@ -422,129 +689,220 @@ for i = 0, rampSteps - 1 do
 	local y0 = 1 - rampDrop * t0
 	local y1 = 1 - rampDrop * t1
 	local yMid = (y0 + y1) / 2
-	local thick = math.max(1.4, math.abs(y0 - y1) + 1)
+	local thick = math.max(1.5, math.abs(y0 - y1) + 1.1)
 	part({
-		Name = "RampStep" .. i,
-		Size = Vector3.new(18, thick, z1 - z0 + 0.25),
+		Name = "RampFloor" .. i,
+		Size = Vector3.new(rampWidth, thick, z1 - z0 + 0.3),
 		Position = Vector3.new(0, yMid, (z0 + z1) / 2),
-		Color = COL_CONCRETE_DARK,
+		Color = COL_CONCRETE_PALE,
 		Material = Enum.Material.Concrete,
 		Parent = rampFolder,
 	})
-	local wallH = 10 + rampDrop * t1 * 0.35
-	part({
-		Name = "RampWallL" .. i,
-		Size = Vector3.new(1.8, wallH, z1 - z0 + 0.25),
-		Position = Vector3.new(-9.5, y1 + wallH / 2, (z0 + z1) / 2),
-		Color = COL_CONCRETE,
-		Material = Enum.Material.Concrete,
-		Parent = rampFolder,
-	})
-	part({
-		Name = "RampWallR" .. i,
-		Size = Vector3.new(1.8, wallH, z1 - z0 + 0.25),
-		Position = Vector3.new(9.5, y1 + wallH / 2, (z0 + z1) / 2),
-		Color = COL_CONCRETE,
-		Material = Enum.Material.Concrete,
-		Parent = rampFolder,
-	})
-	-- handrails
-	part({
-		Name = "RailL" .. i,
-		Size = Vector3.new(0.25, 0.25, z1 - z0 + 0.2),
-		Position = Vector3.new(-8.2, y1 + 3.5, (z0 + z1) / 2),
-		Color = COL_METAL,
-		Material = Enum.Material.Metal,
-		Parent = rampFolder,
-	})
-	part({
-		Name = "RailR" .. i,
-		Size = Vector3.new(0.25, 0.25, z1 - z0 + 0.2),
-		Position = Vector3.new(8.2, y1 + 3.5, (z0 + z1) / 2),
-		Color = COL_METAL,
-		Material = Enum.Material.Metal,
-		Parent = rampFolder,
-	})
+	-- Tall cast walls (formwork bands)
+	local wallH = 14 + rampDrop * t1 * 0.25
+	for side = -1, 1, 2 do
+		part({
+			Name = "RampWall",
+			Size = Vector3.new(2.2, wallH, z1 - z0 + 0.3),
+			Position = Vector3.new(side * (rampWidth / 2 + 1), y1 + wallH / 2 - 1, (z0 + z1) / 2),
+			Color = COL_CONCRETE,
+			Material = Enum.Material.Concrete,
+			Parent = rampFolder,
+		})
+		-- formwork seam lines
+		part({
+			Name = "FormLine",
+			Size = Vector3.new(0.15, wallH * 0.9, 0.15),
+			Position = Vector3.new(side * (rampWidth / 2 + 0.1), y1 + wallH / 2 - 1, (z0 + z1) / 2),
+			Color = COL_CONCRETE_DARK,
+			Material = Enum.Material.Concrete,
+			CanCollide = false,
+			Parent = rampFolder,
+		})
+		-- pipe handrail
+		part({
+			Name = "Rail",
+			Size = Vector3.new(0.28, 0.28, z1 - z0 + 0.2),
+			Position = Vector3.new(side * (rampWidth / 2 - 0.8), y1 + 3.6, (z0 + z1) / 2),
+			Color = COL_METAL,
+			Material = Enum.Material.Metal,
+			Parent = rampFolder,
+		})
+		part({
+			Name = "RailPost",
+			Size = Vector3.new(0.25, 3.4, 0.25),
+			Position = Vector3.new(side * (rampWidth / 2 - 0.8), y1 + 2.2, (z0 + z1) / 2),
+			Color = COL_METAL,
+			Material = Enum.Material.Metal,
+			Parent = rampFolder,
+		})
+	end
 end
 
 local tunnelY = 1 - rampDrop
 local tunnelZ0 = rampStartZ + rampLen
-local tunnelZ1 = tunnelZ0 + 36
+local tunnelZ1 = tunnelZ0 + 42
+
+-- Black tunnel mouth frame
+part({
+	Name = "MouthFrame",
+	Size = Vector3.new(rampWidth + 4, 16, 1.5),
+	Position = Vector3.new(0, tunnelY + 7, tunnelZ0 - 0.5),
+	Color = COL_BLACK,
+	Material = Enum.Material.SmoothPlastic,
+	Parent = rampFolder,
+})
+part({
+	Name = "MouthHole",
+	Size = Vector3.new(rampWidth - 1, 12, 2),
+	Position = Vector3.new(0, tunnelY + 6, tunnelZ0),
+	Color = COL_BLACK,
+	Material = Enum.Material.SmoothPlastic,
+	CanCollide = false,
+	Transparency = 0.3,
+	Parent = rampFolder,
+})
+
+----------------------------------------------------------------
+-- 4. TUNNEL (brick arches, mesh rails, red wash, amber ahead)
+----------------------------------------------------------------
 part({
 	Name = "TunnelFloor",
-	Size = Vector3.new(18, 1, tunnelZ1 - tunnelZ0),
+	Size = Vector3.new(rampWidth, 1, tunnelZ1 - tunnelZ0),
 	Position = Vector3.new(0, tunnelY, (tunnelZ0 + tunnelZ1) / 2),
-	Color = COL_SLATE,
-	Material = Enum.Material.Concrete,
+	Color = COL_BRICK_DARK,
+	Material = Enum.Material.Brick,
 	Parent = rampFolder,
 })
 part({
 	Name = "TunnelWallL",
-	Size = Vector3.new(1.8, 14, tunnelZ1 - tunnelZ0),
-	Position = Vector3.new(-9.5, tunnelY + 7, (tunnelZ0 + tunnelZ1) / 2),
-	Color = COL_CONCRETE,
-	Material = Enum.Material.Concrete,
+	Size = Vector3.new(2, 14, tunnelZ1 - tunnelZ0),
+	Position = Vector3.new(-(rampWidth / 2 + 1), tunnelY + 7, (tunnelZ0 + tunnelZ1) / 2),
+	Color = COL_BRICK_AGED,
+	Material = Enum.Material.Brick,
 	Parent = rampFolder,
 })
 part({
 	Name = "TunnelWallR",
-	Size = Vector3.new(1.8, 14, tunnelZ1 - tunnelZ0),
-	Position = Vector3.new(9.5, tunnelY + 7, (tunnelZ0 + tunnelZ1) / 2),
-	Color = COL_CONCRETE,
-	Material = Enum.Material.Concrete,
+	Size = Vector3.new(2, 14, tunnelZ1 - tunnelZ0),
+	Position = Vector3.new(rampWidth / 2 + 1, tunnelY + 7, (tunnelZ0 + tunnelZ1) / 2),
+	Color = COL_BRICK_AGED,
+	Material = Enum.Material.Brick,
 	Parent = rampFolder,
 })
 part({
 	Name = "TunnelCeil",
-	Size = Vector3.new(18, 1.2, tunnelZ1 - tunnelZ0),
+	Size = Vector3.new(rampWidth + 2, 1.5, tunnelZ1 - tunnelZ0),
 	Position = Vector3.new(0, tunnelY + 14, (tunnelZ0 + tunnelZ1) / 2),
-	Color = COL_CONCRETE_DARK,
-	Material = Enum.Material.Concrete,
+	Color = COL_BRICK_DARK,
+	Material = Enum.Material.Brick,
 	Parent = rampFolder,
 })
 
--- Arch ribs + red wash lights (Knockdown / Basement tunnel vibe)
-for i = 0, 7 do
-	local z = tunnelZ0 + 3 + i * 4.2
+-- Arch ribs (brick stack approximation) + speakers + red neon
+for i = 0, 9 do
+	local z = tunnelZ0 + 3 + i * 4
+	-- arch ring pieces
+	for a = 0, 6 do
+		local ang = math.rad(-90 + a * 30)
+		local ax = math.cos(ang) * 7
+		local ay = tunnelY + 7 + math.sin(ang) * 6
+		part({
+			Name = "ArchBrick",
+			Size = Vector3.new(1.8, 1.2, 1.0),
+			Position = Vector3.new(ax, ay, z),
+			Color = COL_BRICK,
+			Material = Enum.Material.Brick,
+			Parent = rampFolder,
+		})
+	end
+	-- pillars
 	part({
-		Name = "ArchRib",
-		Size = Vector3.new(17.5, 0.6, 0.6),
-		Position = Vector3.new(0, tunnelY + 13.2, z),
-		Color = COL_METAL,
-		Material = Enum.Material.Metal,
+		Name = "ArchPillarL",
+		Size = Vector3.new(2.5, 10, 2.2),
+		Position = Vector3.new(-7.5, tunnelY + 5, z),
+		Color = COL_BRICK,
+		Material = Enum.Material.Brick,
 		Parent = rampFolder,
 	})
 	part({
-		Name = "ArchPostL",
-		Size = Vector3.new(0.5, 12, 0.5),
-		Position = Vector3.new(-8.4, tunnelY + 7, z),
-		Color = COL_METAL,
+		Name = "ArchPillarR",
+		Size = Vector3.new(2.5, 10, 2.2),
+		Position = Vector3.new(7.5, tunnelY + 5, z),
+		Color = COL_BRICK,
+		Material = Enum.Material.Brick,
+		Parent = rampFolder,
+	})
+	-- mesh rail
+	part({
+		Name = "MeshRailL",
+		Size = Vector3.new(0.15, 2.2, 3.5),
+		Position = Vector3.new(-5.5, tunnelY + 2.2, z),
+		Color = COL_BLACK,
 		Material = Enum.Material.Metal,
+		Transparency = 0.35,
 		Parent = rampFolder,
 	})
 	part({
-		Name = "ArchPostR",
-		Size = Vector3.new(0.5, 12, 0.5),
-		Position = Vector3.new(8.4, tunnelY + 7, z),
-		Color = COL_METAL,
+		Name = "MeshRailR",
+		Size = Vector3.new(0.15, 2.2, 3.5),
+		Position = Vector3.new(5.5, tunnelY + 2.2, z),
+		Color = COL_BLACK,
 		Material = Enum.Material.Metal,
+		Transparency = 0.35,
 		Parent = rampFolder,
 	})
+	-- wall speakers
+	if i % 2 == 0 then
+		part({
+			Name = "WallSpeaker",
+			Size = Vector3.new(1.5, 3, 2),
+			Position = Vector3.new(-8.5, tunnelY + 9, z),
+			Color = COL_BLACK,
+			Material = Enum.Material.SmoothPlastic,
+			Parent = rampFolder,
+		})
+		part({
+			Name = "WallSpeaker",
+			Size = Vector3.new(1.5, 3, 2),
+			Position = Vector3.new(8.5, tunnelY + 9, z),
+			Color = COL_BLACK,
+			Material = Enum.Material.SmoothPlastic,
+			Parent = rampFolder,
+		})
+	end
+	-- red wash
 	local red = part({
 		Name = "TunnelRed",
-		Size = Vector3.new(2.5, 0.4, 2.5),
-		Position = Vector3.new(0, tunnelY + 13.5, z),
+		Size = Vector3.new(3, 0.4, 3),
+		Position = Vector3.new(0, tunnelY + 13.2, z),
 		Color = COL_RED,
 		Material = Enum.Material.Neon,
 		CanCollide = false,
 		Parent = rampFolder,
 	})
-	light(red, COL_RED, 3.5, 22)
+	light(red, COL_RED_DEEP, 4.2, 26)
 end
 
--- Rise back into club level
+-- Amber grid at tunnel end (pull toward club)
+for r = 0, 3 do
+	for c = 0, 5 do
+		local bulb = part({
+			Name = "AmberGrid",
+			Size = Vector3.new(1.4, 1.4, 0.3),
+			Position = Vector3.new(-5 + c * 2, tunnelY + 4 + r * 2.2, tunnelZ1 - 1),
+			Color = COL_AMBER,
+			Material = Enum.Material.Neon,
+			CanCollide = false,
+			Parent = rampFolder,
+		})
+		light(bulb, COL_AMBER, 1.4, 12)
+	end
+end
+
+-- Rise into club
 local riseSteps = 10
-local riseLen = 24
+local riseLen = 26
 for i = 0, riseSteps - 1 do
 	local t0 = i / riseSteps
 	local t1 = (i + 1) / riseSteps
@@ -553,330 +911,270 @@ for i = 0, riseSteps - 1 do
 	local y0 = tunnelY + rampDrop * t0
 	local y1 = tunnelY + rampDrop * t1
 	part({
-		Name = "RiseStep" .. i,
-		Size = Vector3.new(18, math.max(1.4, math.abs(y1 - y0) + 1), z1 - z0 + 0.25),
+		Name = "RiseFloor" .. i,
+		Size = Vector3.new(rampWidth, math.max(1.5, math.abs(y1 - y0) + 1), z1 - z0 + 0.3),
 		Position = Vector3.new(0, (y0 + y1) / 2, (z0 + z1) / 2),
 		Color = COL_FLOOR,
 		Material = Enum.Material.Brick,
 		Parent = rampFolder,
 	})
-	part({
-		Name = "RiseWallL" .. i,
-		Size = Vector3.new(1.8, 12, z1 - z0 + 0.25),
-		Position = Vector3.new(-9.5, (y0 + y1) / 2 + 6, (z0 + z1) / 2),
-		Color = COL_BRICK_DARK,
-		Material = Enum.Material.Brick,
-		Parent = rampFolder,
-	})
-	part({
-		Name = "RiseWallR" .. i,
-		Size = Vector3.new(1.8, 12, z1 - z0 + 0.25),
-		Position = Vector3.new(9.5, (y0 + y1) / 2 + 6, (z0 + z1) / 2),
-		Color = COL_BRICK_DARK,
-		Material = Enum.Material.Brick,
-		Parent = rampFolder,
-	})
+	for side = -1, 1, 2 do
+		part({
+			Name = "RiseWall",
+			Size = Vector3.new(2, 12, z1 - z0 + 0.3),
+			Position = Vector3.new(side * (rampWidth / 2 + 1), (y0 + y1) / 2 + 6, (z0 + z1) / 2),
+			Color = COL_BRICK_DARK,
+			Material = Enum.Material.Brick,
+			Parent = rampFolder,
+		})
+	end
 end
 
-local clubZ0 = tunnelZ1 + riseLen -- ~ first interior room center base
+local clubZ0 = tunnelZ1 + riseLen
 
 ----------------------------------------------------------------
--- 3. SECURITY (ID + fashion check)
+-- 5. SECURITY
 ----------------------------------------------------------------
-local secCenter = Vector3.new(0, 1, clubZ0 + 20)
+local secCenter = Vector3.new(0, 1, clubZ0 + 22)
 local sec = roomShell({
 	Name = "Security",
 	Center = secCenter,
-	Size = Vector3.new(48, 16, 40),
+	Size = Vector3.new(52, 16, 42),
 	DoorGaps = { S = 14, N = 12 },
 	FloorColor = COL_FLOOR,
 	WallColor = COL_BRICK_DARK,
 })
 
--- Split desks + aisle (walkable center)
-part({ Name = "DeskL", Size = Vector3.new(14, 3.5, 5), Position = Vector3.new(-12, 2.75, secCenter.Z + 2), Color = COL_METAL, Material = Enum.Material.DiamondPlate, Parent = sec })
-part({ Name = "DeskR", Size = Vector3.new(14, 3.5, 5), Position = Vector3.new(12, 2.75, secCenter.Z + 2), Color = COL_METAL, Material = Enum.Material.DiamondPlate, Parent = sec })
-part({ Name = "MonitorL", Size = Vector3.new(3, 2, 0.4), Position = Vector3.new(-12, 5.5, secCenter.Z + 0.5), Color = Color3.fromRGB(40, 80, 50), Material = Enum.Material.Neon, CanCollide = false, Parent = sec })
-part({ Name = "MonitorR", Size = Vector3.new(3, 2, 0.4), Position = Vector3.new(12, 5.5, secCenter.Z + 0.5), Color = Color3.fromRGB(40, 80, 50), Material = Enum.Material.Neon, CanCollide = false, Parent = sec })
-
-local idSign = part({
-	Name = "IDSign",
-	Size = Vector3.new(10, 2.8, 0.35),
-	Position = Vector3.new(-12, 8.5, secCenter.Z - 2),
-	Color = COL_BLACK,
-	Material = Enum.Material.SmoothPlastic,
-	CanCollide = false,
-	Parent = sec,
-})
-sign(idSign, "ID CHECK", Enum.NormalId.Front, COL_WHITE, COL_BLACK)
-
-local fashionSign = part({
-	Name = "FashionSign",
-	Size = Vector3.new(12, 2.8, 0.35),
-	Position = Vector3.new(12, 8.5, secCenter.Z - 2),
-	Color = COL_BLACK,
-	Material = Enum.Material.SmoothPlastic,
-	CanCollide = false,
-	Parent = sec,
-})
-sign(fashionSign, "FASHION CHECK", Enum.NormalId.Front, COL_RED, COL_BLACK)
-
-local secLight = part({
-	Name = "SecWash",
-	Size = Vector3.new(1, 1, 1),
-	Position = Vector3.new(0, 14, secCenter.Z),
-	Color = COL_RED,
-	Material = Enum.Material.Neon,
-	CanCollide = false,
-	Parent = sec,
-})
-light(secLight, COL_RED, 2.8, 36)
-
--- Barrier posts flanking aisle
-for _, x in ipairs({ -4, 4 }) do
-	part({ Name = "AislePost", Size = Vector3.new(0.6, 4, 0.6), Position = Vector3.new(x, 3, secCenter.Z + 8), Color = COL_BLACK, Material = Enum.Material.Metal, Parent = sec })
+part({ Name = "DeskL", Size = Vector3.new(15, 3.6, 5.5), Position = Vector3.new(-13, 2.8, secCenter.Z + 2), Color = COL_METAL, Material = Enum.Material.DiamondPlate, Parent = sec })
+part({ Name = "DeskR", Size = Vector3.new(15, 3.6, 5.5), Position = Vector3.new(13, 2.8, secCenter.Z + 2), Color = COL_METAL, Material = Enum.Material.DiamondPlate, Parent = sec })
+part({ Name = "MonitorL", Size = Vector3.new(3.2, 2.2, 0.35), Position = Vector3.new(-13, 5.6, secCenter.Z + 0.2), Color = Color3.fromRGB(35, 90, 55), Material = Enum.Material.Neon, CanCollide = false, Parent = sec })
+part({ Name = "MonitorR", Size = Vector3.new(3.2, 2.2, 0.35), Position = Vector3.new(13, 5.6, secCenter.Z + 0.2), Color = Color3.fromRGB(35, 90, 55), Material = Enum.Material.Neon, CanCollide = false, Parent = sec })
+-- scanners / stanchions
+for _, x in ipairs({ -5, 5 }) do
+	part({ Name = "Scanner", Size = Vector3.new(1.2, 6, 1.2), Position = Vector3.new(x, 4, secCenter.Z + 10), Color = COL_BLACK, Material = Enum.Material.Metal, Parent = sec })
+	part({ Name = "ScannerBeam", Size = Vector3.new(0.2, 4, 0.2), Position = Vector3.new(x, 4, secCenter.Z + 10), Color = COL_RED, Material = Enum.Material.Neon, CanCollide = false, Parent = sec })
 end
 
+local idSign = part({ Name = "IDSign", Size = Vector3.new(11, 3, 0.35), Position = Vector3.new(-13, 9, secCenter.Z - 3), Color = COL_BLACK, Material = Enum.Material.SmoothPlastic, CanCollide = false, Parent = sec })
+sign(idSign, "ID CHECK", Enum.NormalId.Front, COL_WHITE, COL_BLACK)
+local fashionSign = part({ Name = "FashionSign", Size = Vector3.new(13, 3, 0.35), Position = Vector3.new(13, 9, secCenter.Z - 3), Color = COL_BLACK, Material = Enum.Material.SmoothPlastic, CanCollide = false, Parent = sec })
+sign(fashionSign, "FASHION CHECK", Enum.NormalId.Front, COL_RED, COL_BLACK)
+
+local secLight = part({ Name = "SecWash", Size = Vector3.new(1.2, 1.2, 1.2), Position = Vector3.new(0, 14, secCenter.Z), Color = COL_RED, Material = Enum.Material.Neon, CanCollide = false, Parent = sec })
+light(secLight, COL_RED, 3.2, 40)
+
 ----------------------------------------------------------------
--- 4. LOCKERS
+-- 6. LOCKERS
 ----------------------------------------------------------------
-local lockCenter = Vector3.new(0, 1, secCenter.Z + 48)
+local lockCenter = Vector3.new(0, 1, secCenter.Z + 50)
 local lockers = roomShell({
 	Name = "Lockers",
 	Center = lockCenter,
-	Size = Vector3.new(56, 16, 52),
+	Size = Vector3.new(58, 16, 54),
 	DoorGaps = { S = 12, N = 14 },
 	FloorColor = COL_FLOOR,
 	WallColor = COL_BRICK,
 })
 
 for row = 0, 2 do
-	for col = 0, 5 do
-		local x = -20 + col * 8
-		if x > -4 and x < 4 then
-			-- keep center aisle clear
-		else
-			local z = lockCenter.Z - 14 + row * 12
+	for col = 0, 6 do
+		local x = -24 + col * 8
+		if x < -5 or x > 5 then
+			local z = lockCenter.Z - 16 + row * 14
 			part({
 				Name = "LockerBank",
-				Size = Vector3.new(6, 8, 2.2),
-				Position = Vector3.new(x, 5, z),
+				Size = Vector3.new(6.5, 9, 2.4),
+				Position = Vector3.new(x, 5.5, z),
 				Color = COL_METAL,
 				Material = Enum.Material.Metal,
 				Parent = lockers,
 			})
-			-- door seams
-			part({
-				Name = "LockerDoor",
-				Size = Vector3.new(2.6, 7.2, 0.15),
-				Position = Vector3.new(x - 1.5, 5, z - 1.2),
-				Color = COL_SLATE,
-				Material = Enum.Material.Metal,
-				CanCollide = false,
-				Parent = lockers,
-			})
-			part({
-				Name = "LockerDoor2",
-				Size = Vector3.new(2.6, 7.2, 0.15),
-				Position = Vector3.new(x + 1.5, 5, z - 1.2),
-				Color = COL_SLATE,
-				Material = Enum.Material.Metal,
-				CanCollide = false,
-				Parent = lockers,
-			})
+			for d = -1, 1, 2 do
+				part({
+					Name = "LockerDoor",
+					Size = Vector3.new(2.8, 8, 0.15),
+					Position = Vector3.new(x + d * 1.6, 5.5, z - 1.3),
+					Color = COL_SLATE,
+					Material = Enum.Material.Metal,
+					CanCollide = false,
+					Parent = lockers,
+				})
+				part({
+					Name = "Handle",
+					Size = Vector3.new(0.15, 0.8, 0.3),
+					Position = Vector3.new(x + d * 0.5, 5.5, z - 1.5),
+					Color = COL_METAL_DK,
+					Material = Enum.Material.Metal,
+					CanCollide = false,
+					Parent = lockers,
+				})
+			end
 		end
 	end
 end
-
-local bench = part({
+part({
 	Name = "Bench",
-	Size = Vector3.new(18, 1.2, 3),
-	Position = Vector3.new(0, 1.6, lockCenter.Z + 8),
-	Color = Color3.fromRGB(40, 40, 44),
+	Size = Vector3.new(20, 1.3, 3.2),
+	Position = Vector3.new(0, 1.7, lockCenter.Z + 10),
+	Color = Color3.fromRGB(38, 38, 42),
 	Material = Enum.Material.Wood,
+	Parent = lockers,
+})
+part({
+	Name = "CoatHooks",
+	Size = Vector3.new(16, 0.4, 0.4),
+	Position = Vector3.new(0, 8, lockCenter.Z + 24),
+	Color = COL_METAL,
+	Material = Enum.Material.Metal,
 	Parent = lockers,
 })
 
 ----------------------------------------------------------------
--- 5. MAIN / CHARLOTTE (dance floor)
+-- 7. MAIN / CHARLOTTE
 ----------------------------------------------------------------
-local mainCenter = Vector3.new(10, 1, lockCenter.Z + 58)
+local mainCenter = Vector3.new(12, 1, lockCenter.Z + 60)
 local main = roomShell({
 	Name = "MainCharlotte",
 	Center = mainCenter,
-	Size = Vector3.new(78, 18, 64),
-	DoorGaps = { S = 14, E = 12, W = 10 },
+	Size = Vector3.new(82, 20, 68),
+	DoorGaps = { S = 14, E = 12, W = 10, N = 10 },
 	FloorColor = COL_FLOOR,
 	FloorMaterial = Enum.Material.Brick,
 	WallColor = COL_BRICK_DARK,
 	Pipes = true,
 })
 
--- Dance floor plate (slightly raised darker slab)
-part({
-	Name = "DancePlate",
-	Size = Vector3.new(36, 0.25, 28),
-	Position = Vector3.new(mainCenter.X, 1.2, mainCenter.Z - 2),
-	Color = COL_BLACK,
-	Material = Enum.Material.SmoothPlastic,
-	Parent = main,
-})
-
--- DJ booth / riser
-part({
-	Name = "DJRiser",
-	Size = Vector3.new(16, 2.5, 8),
-	Position = Vector3.new(mainCenter.X, 2.25, mainCenter.Z + 22),
-	Color = COL_SLATE,
-	Material = Enum.Material.Concrete,
-	Parent = main,
-})
-part({
-	Name = "DJDesk",
-	Size = Vector3.new(12, 3, 3.5),
-	Position = Vector3.new(mainCenter.X, 5, mainCenter.Z + 22),
-	Color = COL_BLACK,
-	Material = Enum.Material.SmoothPlastic,
-	Parent = main,
-})
-part({
-	Name = "CDJGlow",
-	Size = Vector3.new(8, 0.3, 2),
-	Position = Vector3.new(mainCenter.X, 6.6, mainCenter.Z + 22),
-	Color = Color3.fromRGB(80, 180, 255),
-	Material = Enum.Material.Neon,
-	CanCollide = false,
-	Parent = main,
-})
-
--- Funktion-One-ish white stacks (left / right)
-for _, xOff in ipairs({ -28, 28 }) do
-	local bx = mainCenter.X + xOff
+-- Extra diagonal ceiling pipes (photo ref)
+for i = 0, 3 do
 	part({
-		Name = "StackBase",
-		Size = Vector3.new(5, 10, 4),
-		Position = Vector3.new(bx, 6, mainCenter.Z + 18),
-		Color = COL_WHITE,
-		Material = Enum.Material.SmoothPlastic,
-		Parent = main,
-	})
-	part({
-		Name = "Horn",
-		Size = Vector3.new(6, 4, 5),
-		Position = Vector3.new(bx, 13, mainCenter.Z + 18),
-		Color = COL_WHITE,
-		Material = Enum.Material.SmoothPlastic,
-		Parent = main,
-	})
-	part({
-		Name = "HornMouth",
-		Size = Vector3.new(5, 3, 1),
-		Position = Vector3.new(bx, 13, mainCenter.Z + 15.2),
-		Color = COL_BLACK,
-		Material = Enum.Material.SmoothPlastic,
-		CanCollide = false,
+		Name = "DiagPipe",
+		Size = Vector3.new(0.7, 0.7, 40),
+		CFrame = CFrame.new(mainCenter.X - 20 + i * 10, 17.5, mainCenter.Z) * CFrame.Angles(0, math.rad(25 + i * 8), 0),
+		Color = COL_RUST,
+		Material = Enum.Material.CorrodedMetal,
 		Parent = main,
 	})
 end
 
--- Orange grid light panels (ceiling)
-for r = 0, 2 do
-	for c = 0, 5 do
+part({
+	Name = "DancePlate",
+	Size = Vector3.new(40, 0.3, 32),
+	Position = Vector3.new(mainCenter.X, 1.2, mainCenter.Z - 4),
+	Color = COL_BLACK,
+	Material = Enum.Material.SmoothPlastic,
+	Parent = main,
+})
+
+-- DJ riser + booth
+part({ Name = "DJRiser", Size = Vector3.new(18, 2.8, 10), Position = Vector3.new(mainCenter.X, 2.4, mainCenter.Z + 24), Color = COL_SLATE, Material = Enum.Material.Concrete, Parent = main })
+part({ Name = "DJDesk", Size = Vector3.new(14, 3.2, 4), Position = Vector3.new(mainCenter.X, 5.2, mainCenter.Z + 24), Color = COL_BLACK, Material = Enum.Material.SmoothPlastic, Parent = main })
+part({ Name = "CDJGlow", Size = Vector3.new(10, 0.25, 2.2), Position = Vector3.new(mainCenter.X, 6.9, mainCenter.Z + 24), Color = Color3.fromRGB(70, 170, 255), Material = Enum.Material.Neon, CanCollide = false, Parent = main })
+part({ Name = "DJRail", Size = Vector3.new(18, 1.2, 0.3), Position = Vector3.new(mainCenter.X, 4.2, mainCenter.Z + 19), Color = COL_METAL, Material = Enum.Material.Metal, Parent = main })
+
+-- Funktion-One-ish stacks
+for _, xOff in ipairs({ -30, 30 }) do
+	local bx = mainCenter.X + xOff
+	part({ Name = "StackLow", Size = Vector3.new(5.5, 6, 4.5), Position = Vector3.new(bx, 4, mainCenter.Z + 20), Color = COL_WHITE, Material = Enum.Material.SmoothPlastic, Parent = main })
+	part({ Name = "StackMid", Size = Vector3.new(5.5, 5, 4.5), Position = Vector3.new(bx, 9.5, mainCenter.Z + 20), Color = COL_WHITE, Material = Enum.Material.SmoothPlastic, Parent = main })
+	part({ Name = "Horn", Size = Vector3.new(7, 4.5, 5.5), Position = Vector3.new(bx, 14.5, mainCenter.Z + 20), Color = COL_WHITE, Material = Enum.Material.SmoothPlastic, Parent = main })
+	part({ Name = "HornMouth", Size = Vector3.new(5.5, 3.5, 1.2), Position = Vector3.new(bx, 14.5, mainCenter.Z + 16.8), Color = COL_BLACK, Material = Enum.Material.SmoothPlastic, CanCollide = false, Parent = main })
+	part({ Name = "HornBrace", Size = Vector3.new(0.5, 8, 0.5), Position = Vector3.new(bx, 10, mainCenter.Z + 22), Color = COL_METAL, Material = Enum.Material.Metal, Parent = main })
+end
+
+-- Orange LED grid wall (behind DJ / ceiling)
+for r = 0, 3 do
+	for c = 0, 7 do
 		local bulb = part({
 			Name = "OrangeGrid",
-			Size = Vector3.new(2.2, 2.2, 0.35),
-			Position = Vector3.new(mainCenter.X - 12 + c * 5, 16.5, mainCenter.Z - 12 + r * 6),
+			Size = Vector3.new(2.0, 2.0, 0.35),
+			Position = Vector3.new(mainCenter.X - 14 + c * 4, 16.8, mainCenter.Z - 8 + r * 4),
 			Color = COL_ORANGE,
 			Material = Enum.Material.Neon,
 			CanCollide = false,
 			Parent = main,
 		})
-		light(bulb, COL_ORANGE, 1.2, 16)
+		light(bulb, COL_ORANGE, 1.35, 15)
+	end
+end
+-- rear amber wall grid
+for r = 0, 4 do
+	for c = 0, 8 do
+		part({
+			Name = "RearGrid",
+			Size = Vector3.new(1.6, 1.6, 0.25),
+			Position = Vector3.new(mainCenter.X - 14 + c * 3.5, 4 + r * 2.8, mainCenter.Z + 32),
+			Color = COL_AMBER,
+			Material = Enum.Material.Neon,
+			CanCollide = false,
+			Parent = main,
+		})
 	end
 end
 
-local mainWash = part({
-	Name = "MainWash",
-	Size = Vector3.new(1.5, 1.5, 1.5),
-	Position = Vector3.new(mainCenter.X, 15, mainCenter.Z),
-	Color = COL_RED,
-	Material = Enum.Material.Neon,
-	CanCollide = false,
-	Parent = main,
-})
-light(mainWash, COL_RED, 3.2, 55)
+local mainWash = part({ Name = "MainWash", Size = Vector3.new(2, 2, 2), Position = Vector3.new(mainCenter.X, 16, mainCenter.Z), Color = COL_RED, Material = Enum.Material.Neon, CanCollide = false, Parent = main })
+light(mainWash, COL_RED_DEEP, 3.8, 60)
 
--- Side pillars
-for _, xOff in ipairs({ -30, -10, 10, 30 }) do
+for _, xOff in ipairs({ -32, -12, 12, 32 }) do
 	part({
 		Name = "Pillar",
-		Size = Vector3.new(3, 16, 3),
-		Position = Vector3.new(mainCenter.X + xOff, 9, mainCenter.Z - 20),
+		Size = Vector3.new(3.5, 18, 3.5),
+		Position = Vector3.new(mainCenter.X + xOff, 10, mainCenter.Z - 22),
 		Color = COL_CONCRETE,
 		Material = Enum.Material.Concrete,
 		Parent = main,
 	})
 end
 
+-- Side wall recessed panels (angular industrial)
+for i = 0, 4 do
+	part({
+		Name = "RecessPanel",
+		Size = Vector3.new(0.4, 8, 6),
+		Position = Vector3.new(mainCenter.X - 40, 8, mainCenter.Z - 16 + i * 8),
+		Color = COL_METAL_DK,
+		Material = Enum.Material.Metal,
+		Parent = main,
+	})
+end
+
 ----------------------------------------------------------------
--- 6. STUDIO (off main, west)
+-- 8. STUDIO
 ----------------------------------------------------------------
-local studioCenter = Vector3.new(mainCenter.X - 55, 1, mainCenter.Z)
+local studioCenter = Vector3.new(mainCenter.X - 58, 1, mainCenter.Z)
 local studio = roomShell({
 	Name = "Studio",
 	Center = studioCenter,
-	Size = Vector3.new(36, 16, 40),
+	Size = Vector3.new(38, 16, 42),
 	DoorGaps = { E = 10 },
 	FloorColor = COL_SLATE,
 	FloorMaterial = Enum.Material.Concrete,
 	WallColor = COL_BRICK_DARK,
 })
-part({
-	Name = "Booth",
-	Size = Vector3.new(10, 4, 6),
-	Position = Vector3.new(studioCenter.X - 8, 3, studioCenter.Z + 8),
-	Color = COL_BLACK,
-	Material = Enum.Material.SmoothPlastic,
-	Parent = studio,
-})
-part({
-	Name = "Glass",
-	Size = Vector3.new(0.3, 6, 8),
-	Position = Vector3.new(studioCenter.X - 2.5, 5, studioCenter.Z + 8),
-	Color = Color3.fromRGB(120, 160, 180),
-	Material = Enum.Material.Glass,
-	Transparency = 0.45,
-	Reflectance = 0.2,
-	Parent = studio,
-})
-local studioLight = part({
-	Name = "StudioWash",
-	Size = Vector3.new(1, 1, 1),
-	Position = Vector3.new(studioCenter.X, 13, studioCenter.Z),
-	Color = Color3.fromRGB(180, 200, 255),
-	Material = Enum.Material.Neon,
-	CanCollide = false,
-	Parent = studio,
-})
-light(studioLight, Color3.fromRGB(160, 190, 255), 2, 28)
+part({ Name = "Booth", Size = Vector3.new(12, 4.5, 7), Position = Vector3.new(studioCenter.X - 8, 3.2, studioCenter.Z + 8), Color = COL_BLACK, Material = Enum.Material.SmoothPlastic, Parent = studio })
+part({ Name = "Mixer", Size = Vector3.new(8, 0.4, 3), Position = Vector3.new(studioCenter.X - 8, 5.6, studioCenter.Z + 8), Color = COL_METAL_DK, Material = Enum.Material.Metal, Parent = studio })
+part({ Name = "Glass", Size = Vector3.new(0.3, 7, 10), Position = Vector3.new(studioCenter.X - 1.5, 6, studioCenter.Z + 8), Color = Color3.fromRGB(110, 150, 175), Material = Enum.Material.Glass, Transparency = 0.4, Reflectance = 0.25, Parent = studio })
+part({ Name = "Couch", Size = Vector3.new(10, 2.5, 4), Position = Vector3.new(studioCenter.X + 8, 2.2, studioCenter.Z - 8), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Fabric, Parent = studio })
+part({ Name = "MonitorWall", Size = Vector3.new(6, 4, 0.4), Position = Vector3.new(studioCenter.X + 10, 8, studioCenter.Z + 18), Color = Color3.fromRGB(20, 40, 60), Material = Enum.Material.Neon, CanCollide = false, Parent = studio })
+local studioLight = part({ Name = "StudioWash", Size = Vector3.new(1, 1, 1), Position = Vector3.new(studioCenter.X, 13, studioCenter.Z), Color = Color3.fromRGB(170, 195, 255), Material = Enum.Material.Neon, CanCollide = false, Parent = studio })
+light(studioLight, Color3.fromRGB(150, 185, 255), 2.4, 30)
 
 ----------------------------------------------------------------
--- 7. DARK ROOMS (2×2 grid, east of main)
+-- 9. DARK ROOMS 2×2
 ----------------------------------------------------------------
-local darkOrigin = Vector3.new(mainCenter.X + 55, 1, mainCenter.Z - 8)
+local darkOrigin = Vector3.new(mainCenter.X + 58, 1, mainCenter.Z - 10)
 local darkFolder = Instance.new("Folder")
 darkFolder.Name = "DarkRooms"
 darkFolder.Parent = root
 
 for row = 0, 1 do
 	for col = 0, 1 do
-		local cx = darkOrigin.X + col * 22
-		local cz = darkOrigin.Z + row * 22
+		local cx = darkOrigin.X + col * 24
+		local cz = darkOrigin.Z + row * 24
 		local cell = roomShell({
 			Name = "Dark" .. row .. col,
 			Center = Vector3.new(cx, 1, cz),
-			Size = Vector3.new(20, 12, 20),
-			DoorGaps = { W = (col == 0 and row == 0) and 8 or 6 },
+			Size = Vector3.new(22, 12, 22),
+			DoorGaps = { W = (col == 0) and 7 or 6 },
 			FloorColor = COL_BLACK,
 			FloorMaterial = Enum.Material.SmoothPlastic,
 			WallColor = COL_BLACK,
@@ -885,27 +1183,38 @@ for row = 0, 1 do
 			Pipes = false,
 		})
 		cell.Parent = darkFolder
+		-- recessed angular panels
+		for i = 0, 2 do
+			part({
+				Name = "DarkPanel",
+				Size = Vector3.new(0.35, 5, 4),
+				Position = Vector3.new(cx + 9, 5, cz - 5 + i * 5),
+				Color = Color3.fromRGB(25, 8, 10),
+				Material = Enum.Material.Metal,
+				Parent = cell,
+			})
+		end
 		local ember = part({
 			Name = "Ember",
-			Size = Vector3.new(0.6, 0.6, 0.6),
-			Position = Vector3.new(cx, 9, cz),
-			Color = Color3.fromRGB(180, 40, 20),
+			Size = Vector3.new(0.5, 0.5, 0.5),
+			Position = Vector3.new(cx, 9.5, cz),
+			Color = Color3.fromRGB(160, 30, 18),
 			Material = Enum.Material.Neon,
 			CanCollide = false,
 			Parent = cell,
 		})
-		light(ember, Color3.fromRGB(180, 40, 20), 0.6, 12)
+		light(ember, Color3.fromRGB(160, 30, 18), 0.55, 11)
 	end
 end
 
 ----------------------------------------------------------------
--- 8. BATHROOMS (bright tile — Mad Max contrast)
+-- 10. BATHROOMS (bright Mad Max tile)
 ----------------------------------------------------------------
-local bathCenter = Vector3.new(mainCenter.X + 20, 1, mainCenter.Z + 48)
+local bathCenter = Vector3.new(mainCenter.X + 22, 1, mainCenter.Z + 52)
 local baths = roomShell({
 	Name = "Bathrooms",
 	Center = bathCenter,
-	Size = Vector3.new(40, 14, 28),
+	Size = Vector3.new(44, 14, 30),
 	DoorGaps = { S = 10 },
 	FloorColor = COL_TILE,
 	FloorMaterial = Enum.Material.CeramicTiles,
@@ -915,168 +1224,94 @@ local baths = roomShell({
 	Pipes = false,
 })
 
+for i = 0, 4 do
+	part({ Name = "Stall", Size = Vector3.new(4.2, 8.5, 5.5), Position = Vector3.new(bathCenter.X - 14 + i * 7, 5.2, bathCenter.Z + 5), Color = COL_WHITE, Material = Enum.Material.SmoothPlastic, Parent = baths })
+	part({ Name = "StallDoor", Size = Vector3.new(3.4, 7.5, 0.2), Position = Vector3.new(bathCenter.X - 14 + i * 7, 4.8, bathCenter.Z + 2), Color = Color3.fromRGB(205, 205, 210), Material = Enum.Material.SmoothPlastic, Parent = baths })
+end
 for i = 0, 3 do
-	part({
-		Name = "Stall",
-		Size = Vector3.new(4, 8, 5),
-		Position = Vector3.new(bathCenter.X - 12 + i * 7, 5, bathCenter.Z + 4),
-		Color = COL_WHITE,
-		Material = Enum.Material.SmoothPlastic,
-		Parent = baths,
-	})
-	part({
-		Name = "StallDoor",
-		Size = Vector3.new(3.2, 7, 0.2),
-		Position = Vector3.new(bathCenter.X - 12 + i * 7, 4.5, bathCenter.Z + 1.2),
-		Color = Color3.fromRGB(200, 200, 205),
-		Material = Enum.Material.SmoothPlastic,
-		Parent = baths,
-	})
+	part({ Name = "Sink", Size = Vector3.new(3.2, 2.2, 2.2), Position = Vector3.new(bathCenter.X - 10 + i * 7, 3.1, bathCenter.Z - 9), Color = COL_WHITE, Material = Enum.Material.SmoothPlastic, Parent = baths })
+	part({ Name = "Mirror", Size = Vector3.new(3, 3.5, 0.15), Position = Vector3.new(bathCenter.X - 10 + i * 7, 7, bathCenter.Z - 11.5), Color = Color3.fromRGB(180, 200, 210), Material = Enum.Material.Glass, Reflectance = 0.6, CanCollide = false, Parent = baths })
 end
-for i = 0, 2 do
-	part({
-		Name = "Sink",
-		Size = Vector3.new(3, 2, 2),
-		Position = Vector3.new(bathCenter.X - 8 + i * 7, 3, bathCenter.Z - 8),
-		Color = COL_WHITE,
-		Material = Enum.Material.Porcelain,
-		Parent = baths,
-	})
-end
-local bathLight = part({
-	Name = "BathFluoro",
-	Size = Vector3.new(12, 0.4, 1),
-	Position = Vector3.new(bathCenter.X, 12.5, bathCenter.Z),
-	Color = Color3.fromRGB(255, 250, 230),
-	Material = Enum.Material.Neon,
-	CanCollide = false,
-	Parent = baths,
-})
-light(bathLight, Color3.fromRGB(255, 250, 230), 4, 30)
+-- graffiti stripe
+part({ Name = "Graffiti", Size = Vector3.new(20, 4, 0.2), Position = Vector3.new(bathCenter.X, 9, bathCenter.Z + 14), Color = COL_RED, Material = Enum.Material.SmoothPlastic, CanCollide = false, Parent = baths })
+local bathLight = part({ Name = "BathFluoro", Size = Vector3.new(16, 0.4, 1.2), Position = Vector3.new(bathCenter.X, 12.5, bathCenter.Z), Color = Color3.fromRGB(255, 252, 235), Material = Enum.Material.Neon, CanCollide = false, Parent = baths })
+light(bathLight, Color3.fromRGB(255, 250, 230), 4.5, 32)
 
 ----------------------------------------------------------------
--- 9. BREAK TIME / BACKYARD
+-- 11. BREAK TIME / BACKYARD
 ----------------------------------------------------------------
-local yard2Center = Vector3.new(mainCenter.X - 10, 1, mainCenter.Z + 85)
+local yard2Center = Vector3.new(mainCenter.X - 8, 1, mainCenter.Z + 92)
 local breakYard = Instance.new("Folder")
 breakYard.Name = "BreakTime"
 breakYard.Parent = root
 
-part({
-	Name = "Gravel",
-	Size = Vector3.new(70, 1, 50),
-	Position = yard2Center,
-	Color = COL_GRAVEL,
-	Material = Enum.Material.Ground,
-	Parent = breakYard,
-})
--- low brick walls (open feel)
-part({ Name = "BYWallN", Size = Vector3.new(70, 8, 2), Position = Vector3.new(yard2Center.X, 5, yard2Center.Z + 25), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = breakYard })
-part({ Name = "BYWallW", Size = Vector3.new(2, 8, 50), Position = Vector3.new(yard2Center.X - 35, 5, yard2Center.Z), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = breakYard })
-part({ Name = "BYWallE", Size = Vector3.new(2, 8, 50), Position = Vector3.new(yard2Center.X + 35, 5, yard2Center.Z), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = breakYard })
--- doorway from baths / main side
-part({ Name = "BYWallS_L", Size = Vector3.new(26, 8, 2), Position = Vector3.new(yard2Center.X - 18, 5, yard2Center.Z - 25), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = breakYard })
-part({ Name = "BYWallS_R", Size = Vector3.new(26, 8, 2), Position = Vector3.new(yard2Center.X + 18, 5, yard2Center.Z - 25), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = breakYard })
+part({ Name = "Gravel", Size = Vector3.new(74, 1, 54), Position = yard2Center, Color = COL_GRAVEL, Material = Enum.Material.Ground, Parent = breakYard })
+part({ Name = "BYWallN", Size = Vector3.new(74, 9, 2), Position = Vector3.new(yard2Center.X, 5.5, yard2Center.Z + 27), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = breakYard })
+part({ Name = "BYWallW", Size = Vector3.new(2, 9, 54), Position = Vector3.new(yard2Center.X - 37, 5.5, yard2Center.Z), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = breakYard })
+part({ Name = "BYWallE", Size = Vector3.new(2, 9, 54), Position = Vector3.new(yard2Center.X + 37, 5.5, yard2Center.Z), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = breakYard })
+part({ Name = "BYWallS_L", Size = Vector3.new(28, 9, 2), Position = Vector3.new(yard2Center.X - 20, 5.5, yard2Center.Z - 27), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = breakYard })
+part({ Name = "BYWallS_R", Size = Vector3.new(28, 9, 2), Position = Vector3.new(yard2Center.X + 20, 5.5, yard2Center.Z - 27), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = breakYard })
 
--- picnic tables
+for i = 0, 3 do
+	local x = yard2Center.X - 21 + i * 14
+	part({ Name = "PicnicTop", Size = Vector3.new(9, 0.5, 4.2), Position = Vector3.new(x, 3.3, yard2Center.Z), Color = Color3.fromRGB(88, 68, 42), Material = Enum.Material.Wood, Parent = breakYard })
+	part({ Name = "PicnicBenchA", Size = Vector3.new(9, 0.4, 1.3), Position = Vector3.new(x, 2.2, yard2Center.Z - 3.2), Color = Color3.fromRGB(88, 68, 42), Material = Enum.Material.Wood, Parent = breakYard })
+	part({ Name = "PicnicBenchB", Size = Vector3.new(9, 0.4, 1.3), Position = Vector3.new(x, 2.2, yard2Center.Z + 3.2), Color = Color3.fromRGB(88, 68, 42), Material = Enum.Material.Wood, Parent = breakYard })
+end
+-- barrel ashtrays / crates
 for i = 0, 2 do
-	local x = yard2Center.X - 16 + i * 16
-	part({
-		Name = "PicnicTop",
-		Size = Vector3.new(8, 0.5, 4),
-		Position = Vector3.new(x, 3.2, yard2Center.Z),
-		Color = Color3.fromRGB(90, 70, 45),
-		Material = Enum.Material.Wood,
-		Parent = breakYard,
-	})
-	part({
-		Name = "PicnicBenchA",
-		Size = Vector3.new(8, 0.4, 1.2),
-		Position = Vector3.new(x, 2.2, yard2Center.Z - 3),
-		Color = Color3.fromRGB(90, 70, 45),
-		Material = Enum.Material.Wood,
-		Parent = breakYard,
-	})
-	part({
-		Name = "PicnicBenchB",
-		Size = Vector3.new(8, 0.4, 1.2),
-		Position = Vector3.new(x, 2.2, yard2Center.Z + 3),
-		Color = Color3.fromRGB(90, 70, 45),
-		Material = Enum.Material.Wood,
-		Parent = breakYard,
-	})
+	part({ Name = "Barrel", Size = Vector3.new(2.5, 3.5, 2.5), Position = Vector3.new(yard2Center.X - 25 + i * 25, 2.5, yard2Center.Z + 14), Color = COL_RUST, Material = Enum.Material.CorrodedMetal, Parent = breakYard })
 end
 
--- string lights
-for i = 0, 8 do
+for i = 0, 10 do
 	local bulb = part({
 		Name = "StringBulb",
-		Size = Vector3.new(0.5, 0.5, 0.5),
-		Position = Vector3.new(yard2Center.X - 20 + i * 5, 9, yard2Center.Z - 5 + (i % 2) * 8),
+		Size = Vector3.new(0.55, 0.55, 0.55),
+		Position = Vector3.new(yard2Center.X - 24 + i * 4.8, 9.5, yard2Center.Z - 6 + (i % 2) * 10),
 		Color = Color3.fromRGB(255, 220, 140),
 		Material = Enum.Material.Neon,
 		CanCollide = false,
 		Parent = breakYard,
 	})
-	light(bulb, Color3.fromRGB(255, 210, 130), 1.2, 14)
+	light(bulb, Color3.fromRGB(255, 210, 130), 1.3, 15)
 end
-
-local breakSign = part({
-	Name = "BreakSign",
-	Size = Vector3.new(16, 3, 0.4),
-	Position = Vector3.new(yard2Center.X, 10, yard2Center.Z + 23),
+-- wire between bulbs
+part({
+	Name = "StringWire",
+	Size = Vector3.new(52, 0.08, 0.08),
+	Position = Vector3.new(yard2Center.X, 9.7, yard2Center.Z),
 	Color = COL_BLACK,
-	Material = Enum.Material.SmoothPlastic,
+	Material = Enum.Material.Metal,
 	CanCollide = false,
 	Parent = breakYard,
 })
+
+local breakSign = part({ Name = "BreakSign", Size = Vector3.new(18, 3.2, 0.4), Position = Vector3.new(yard2Center.X, 11, yard2Center.Z + 25), Color = COL_BLACK, Material = Enum.Material.SmoothPlastic, CanCollide = false, Parent = breakYard })
 sign(breakSign, "BREAK TIME", Enum.NormalId.Front, COL_WHITE, COL_BLACK)
 
 ----------------------------------------------------------------
--- CONNECTING CORRIDORS (security→lockers already via doors;
--- main↔baths, main↔break via short halls)
+-- HALL main → baths
 ----------------------------------------------------------------
 local hall = Instance.new("Folder")
 hall.Name = "Halls"
 hall.Parent = root
-
--- Main → Bathrooms hall
-part({
-	Name = "HallBathFloor",
-	Size = Vector3.new(12, 1, 18),
-	Position = Vector3.new(mainCenter.X + 20, 1, mainCenter.Z + 32),
-	Color = COL_FLOOR,
-	Material = Enum.Material.Brick,
-	Parent = hall,
-})
-part({
-	Name = "HallBathCeil",
-	Size = Vector3.new(12, 1, 18),
-	Position = Vector3.new(mainCenter.X + 20, 14, mainCenter.Z + 32),
-	Color = COL_CONCRETE_DARK,
-	Material = Enum.Material.Concrete,
-	Parent = hall,
-})
-for _, x in ipairs({ mainCenter.X + 14, mainCenter.X + 26 }) do
-	part({
-		Name = "HallBathWall",
-		Size = Vector3.new(1.5, 12, 18),
-		Position = Vector3.new(x, 7.5, mainCenter.Z + 32),
-		Color = COL_BRICK_DARK,
-		Material = Enum.Material.Brick,
-		Parent = hall,
-	})
+part({ Name = "HallBathFloor", Size = Vector3.new(12, 1, 20), Position = Vector3.new(mainCenter.X + 22, 1, mainCenter.Z + 36), Color = COL_FLOOR, Material = Enum.Material.Brick, Parent = hall })
+part({ Name = "HallBathCeil", Size = Vector3.new(12, 1, 20), Position = Vector3.new(mainCenter.X + 22, 14, mainCenter.Z + 36), Color = COL_CONCRETE_DARK, Material = Enum.Material.Concrete, Parent = hall })
+for _, x in ipairs({ mainCenter.X + 16, mainCenter.X + 28 }) do
+	part({ Name = "HallBathWall", Size = Vector3.new(1.5, 12, 20), Position = Vector3.new(x, 7.5, mainCenter.Z + 36), Color = COL_BRICK_DARK, Material = Enum.Material.Brick, Parent = hall })
 end
+-- red wall wash in hall
+local hallRed = part({ Name = "HallRed", Size = Vector3.new(1, 1, 1), Position = Vector3.new(mainCenter.X + 22, 12, mainCenter.Z + 36), Color = COL_RED, Material = Enum.Material.Neon, CanCollide = false, Parent = hall })
+light(hallRed, COL_RED, 2, 20)
 
 ----------------------------------------------------------------
--- SPAWN (courtyard, facing gate)
+-- SPAWN
 ----------------------------------------------------------------
 for _, child in ipairs(Workspace:GetChildren()) do
 	if child:IsA("SpawnLocation") then
 		child:Destroy()
 	end
 end
--- hide default baseplate under courtyard if present
 local bp = Workspace:FindFirstChild("Baseplate")
 if bp and bp:IsA("BasePart") then
 	bp.Transparency = 1
@@ -1086,7 +1321,7 @@ end
 local spawn = Instance.new("SpawnLocation")
 spawn.Name = "BasementSpawn"
 spawn.Size = Vector3.new(8, 1, 8)
-spawn.Position = Vector3.new(0, 1.5, -30)
+spawn.Position = Vector3.new(0, 1.5, -35)
 spawn.Anchored = true
 spawn.Duration = 0
 spawn.Neutral = true
@@ -1094,6 +1329,6 @@ spawn.Color = COL_RED
 spawn.Material = Enum.Material.Neon
 spawn.Parent = root
 
-print("[BasementAuto] Club realism pass built (avatars skipped).")
-print("[BasementAuto] Path: courtyard → gate → ramp → tunnel → security → lockers → main → studio / dark / baths → break time.")
-print("[BasementAuto] Stop Play, then Publish to Roblox as Basement Rave Crew.")
+print("[BasementAuto] Realism v2 built (avatars skipped).")
+print("[BasementAuto] Path: street gate → courtyard → Knockdown facade → ramp → brick tunnel → security → lockers → main → studio / dark / baths → break time.")
+print("[BasementAuto] Stop Play, then Publish. Re-paste this script anytime to rebuild.")

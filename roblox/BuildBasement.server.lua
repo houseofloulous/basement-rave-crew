@@ -312,19 +312,27 @@ local street = Instance.new("Folder")
 street.Name = "StreetGate"
 street.Parent = root
 
--- Sidewalk strip south of gate
+-- Sidewalk strip south of gate + plug into courtyard (no street gap)
 part({
 	Name = "Sidewalk",
-	Size = Vector3.new(70, 0.8, 18),
-	Position = Vector3.new(0, 0.4, -62),
+	Size = Vector3.new(70, 0.8, 28),
+	Position = Vector3.new(0, 0.4, -56),
 	Color = COL_CONCRETE_PALE,
 	Material = Enum.Material.Concrete,
 	Parent = street,
 })
 part({
 	Name = "StreetAsphalt",
-	Size = Vector3.new(90, 1, 22),
-	Position = Vector3.new(0, 0.5, -78),
+	Size = Vector3.new(90, 1, 30),
+	Position = Vector3.new(0, 0.5, -72),
+	Color = COL_ASPHALT,
+	Material = Enum.Material.Asphalt,
+	Parent = street,
+})
+part({
+	Name = "GateThreshold",
+	Size = Vector3.new(22, 1.2, 14),
+	Position = Vector3.new(0, 0.5, -48),
 	Color = COL_ASPHALT,
 	Material = Enum.Material.Asphalt,
 	Parent = street,
@@ -465,12 +473,31 @@ local yard = Instance.new("Folder")
 yard.Name = "Courtyard"
 yard.Parent = root
 
+-- Courtyard asphalt: extend well past facade mouth into ramp apron (no floor hole)
 part({
 	Name = "Asphalt",
-	Size = Vector3.new(90, 1, 88),
-	Position = Vector3.new(0, 0.5, -2),
+	Size = Vector3.new(90, 1, 110),
+	Position = Vector3.new(0, 0.5, 8),
 	Color = COL_ASPHALT,
 	Material = Enum.Material.Asphalt,
+	Parent = yard,
+})
+-- Solid path strip under carpet → mouth → ramp (collide on; fills any seam)
+part({
+	Name = "EntryPath",
+	Size = Vector3.new(20, 1.2, 100),
+	Position = Vector3.new(0, 0.5, 10),
+	Color = COL_ASPHALT,
+	Material = Enum.Material.Asphalt,
+	Parent = yard,
+})
+-- Bridge through Knockdown mouth onto first ramp meters (explicit plug for the reported hole)
+part({
+	Name = "MouthBridge",
+	Size = Vector3.new(18, 1.4, 24),
+	Position = Vector3.new(0, 0.6, 44),
+	Color = COL_CONCRETE_PALE,
+	Material = Enum.Material.Concrete,
 	Parent = yard,
 })
 -- asphalt patches
@@ -494,11 +521,11 @@ end
 part({ Name = "WallW", Size = Vector3.new(2.5, 18, 90), Position = Vector3.new(-45, 9.5, -2), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = yard })
 part({ Name = "WallE", Size = Vector3.new(2.5, 18, 90), Position = Vector3.new(45, 9.5, -2), Color = COL_BRICK, Material = Enum.Material.Brick, Parent = yard })
 
--- Red VIP carpet / queue
+-- Red VIP carpet / queue (visual only — EntryPath underneath is the collider)
 part({
 	Name = "RedCarpet",
-	Size = Vector3.new(11, 0.12, 50),
-	Position = Vector3.new(0, 1.06, -8),
+	Size = Vector3.new(11, 0.12, 55),
+	Position = Vector3.new(0, 1.15, 0),
 	Color = COL_RED,
 	Material = Enum.Material.Fabric,
 	CanCollide = false,
@@ -653,11 +680,21 @@ rampFolder.Parent = root
 
 local rampSteps = 16
 local rampDrop = 18
-local rampStartZ = 42
+local rampStartZ = 50 -- after MouthBridge apron so no hole at facade
 local rampLen = 48
 local rampWidth = 16
 
-	for i = 0, rampSteps - 1 do
+-- Flat landing inside mouth before the drop (walkable solid)
+part({
+	Name = "RampLanding",
+	Size = Vector3.new(rampWidth + 2, 1.5, 12),
+	Position = Vector3.new(0, 0.75, 46),
+	Color = COL_CONCRETE_PALE,
+	Material = Enum.Material.Concrete,
+	Parent = rampFolder,
+})
+
+for i = 0, rampSteps - 1 do
 	local t0 = i / rampSteps
 	local t1 = (i + 1) / rampSteps
 	local z0 = rampStartZ + t0 * rampLen
@@ -665,10 +702,11 @@ local rampWidth = 16
 	local y0 = 1 - rampDrop * t0
 	local y1 = 1 - rampDrop * t1
 	local yMid = (y0 + y1) / 2
-	local thick = math.max(1.5, math.abs(y0 - y1) + 1.1)
+	-- Extra thickness + Z overlap so steps never leave a fall-through seam
+	local thick = math.max(2.2, math.abs(y0 - y1) + 1.6)
 	part({
 		Name = "RampFloor" .. i,
-		Size = Vector3.new(rampWidth, thick, z1 - z0 + 0.3),
+		Size = Vector3.new(rampWidth, thick, z1 - z0 + 0.8),
 		Position = Vector3.new(0, yMid, (z0 + z1) / 2),
 		Color = COL_CONCRETE_PALE,
 		Material = Enum.Material.Concrete,
@@ -1627,7 +1665,7 @@ part({
 	Parent = root,
 })
 
-print("[BasementAuto] Realism v2.2 built (avatars skipped). Path lit; tunnel mouth unblocked.")
+print("[BasementAuto] Realism v2.3 built (avatars skipped). Floor hole at entrance filled.")
 print("[BasementAuto] Explorer → Workspace → BasementAuto → Lockers / Bathrooms / MainCharlotte …")
 print("[BasementAuto] Walk: courtyard → Knockdown mouth → ramp → tunnel → security → LOCKERS → main → hall → BATHROOMS")
 print("[BasementAuto] Stop Play, then Publish. Re-paste this script anytime to rebuild.")

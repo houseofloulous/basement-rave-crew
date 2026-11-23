@@ -14,7 +14,9 @@
     > Studio (2nd DJ, 2nd bar) > The Stalls (toilets, TP, flush, sinks, graffiti)
 
   Interactions (ProximityPrompts, server-only): show ID → dress-code →
-  lockers → snacks/drinks/water → dance → toilet paper / flush / wash.
+  lockers (bag + coat) → snacks/drinks/water → dance → toilet paper / flush / wash.
+  Free audio: Roblox Creator tutorial IDs + built-in engine SFX.
+  Avatar: all-black BodyColors + harness on spawn.
 
   Safe to re-run: it deletes its previous build first.
 ]]
@@ -22,6 +24,7 @@
 local Workspace = game:GetService("Workspace")
 local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
+local SoundService = game:GetService("SoundService")
 
 local ROOT_NAME = "BasementClub"
 
@@ -297,6 +300,285 @@ local function notify(player, text)
 			gui:Destroy()
 		end
 	end)
+end
+
+-- Free Roblox tutorial music + built-in engine SFX (no paid assets)
+local DJ_MUSIC_ID = "rbxassetid://1837849285" -- Upbeat Electronica (Creator docs sample)
+local PEW_SFX = "rbxasset://sounds/electronicpingshort.wav"
+local DANCE_ANIM_IDS = {
+	"rbxassetid://507771019",
+	"rbxassetid://507771955",
+	"rbxassetid://507776043",
+}
+
+local function playPew(player)
+	local char = player.Character
+	local head = char and char:FindFirstChild("Head")
+	local parent = head or Workspace
+	-- double ping = club "pew pew"
+	for i = 1, 2 do
+		local s = Instance.new("Sound")
+		s.Name = "BasementPew"
+		s.SoundId = PEW_SFX
+		s.Volume = 0.55
+		s.PlaybackSpeed = (i == 1) and 1.15 or 0.85
+		s.RollOffMaxDistance = 40
+		s.Parent = parent
+		s:Play()
+		task.delay(1.2, function()
+			if s.Parent then
+				s:Destroy()
+			end
+		end)
+		task.wait(0.09)
+	end
+end
+
+local function attachHarness(character)
+	local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
+	if not torso then
+		return
+	end
+	local old = character:FindFirstChild("BasementHarness")
+	if old then
+		old:Destroy()
+	end
+	local harness = Instance.new("Model")
+	harness.Name = "BasementHarness"
+	harness.Parent = character
+	local function strap(name, size, offset, color)
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Size = size
+		p.Color = color or C.nearBlack
+		p.Material = M.Leather
+		p.CanCollide = false
+		p.Massless = true
+		p.CastShadow = false
+		p.CFrame = torso.CFrame * offset
+		p.Parent = harness
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = torso
+		w.Part1 = p
+		w.Parent = p
+		return p
+	end
+	-- chest X + waist belt + shoulder rings (club harness look)
+	strap("ChestH", Vector3.new(1.7, 0.18, 0.12), CFrame.new(0, 0.35, -0.55))
+	strap("ChestV", Vector3.new(0.18, 1.1, 0.12), CFrame.new(0, 0.1, -0.55))
+	strap("Waist", Vector3.new(1.9, 0.22, 0.35), CFrame.new(0, -0.55, 0), C.black)
+	strap("ShoulderL", Vector3.new(0.55, 0.18, 0.45), CFrame.new(-0.75, 0.55, 0))
+	strap("ShoulderR", Vector3.new(0.55, 0.18, 0.45), CFrame.new(0.75, 0.55, 0))
+	local buckle = strap("Buckle", Vector3.new(0.35, 0.28, 0.2), CFrame.new(0, -0.55, -0.55), C.steel)
+	buckle.Material = M.Metal
+end
+
+local function dressAllBlack(character)
+	local hum = character:FindFirstChildOfClass("Humanoid")
+	if not hum then
+		return
+	end
+	pcall(function()
+		local desc = hum:GetAppliedDescription()
+		local black = Color3.fromRGB(18, 18, 20)
+		desc.HeadColor = black
+		desc.TorsoColor = black
+		desc.LeftArmColor = black
+		desc.RightArmColor = black
+		desc.LeftLegColor = black
+		desc.RightLegColor = black
+		desc.Shirt = 0
+		desc.Pants = 0
+		desc.GraphicTShirt = 0
+		hum:ApplyDescription(desc)
+	end)
+	local bc = character:FindFirstChildOfClass("BodyColors")
+	if not bc then
+		bc = Instance.new("BodyColors")
+		bc.Parent = character
+	end
+	local black = BrickColor.new("Really black")
+	bc.HeadColor = black
+	bc.TorsoColor = black
+	bc.LeftArmColor = black
+	bc.RightArmColor = black
+	bc.LeftLegColor = black
+	bc.RightLegColor = black
+	for _, child in ipairs(character:GetChildren()) do
+		if child:IsA("Shirt") or child:IsA("Pants") or child:IsA("ShirtGraphic") then
+			child:Destroy()
+		end
+	end
+	attachHarness(character)
+end
+
+local function makeBouncer(name, x, z, yawDeg, parent)
+	local model = Instance.new("Model")
+	model.Name = name
+	model.Parent = parent
+	local y = FLOOR
+	local function limb(n, x0, x1, y0, y1, z0, z1, color)
+		return box(n, x0, x1, y0, y1, z0, z1, color or C.black, M.SmoothPlastic, {
+			collide = false,
+			parent = model,
+		})
+	end
+	-- crude standing figure facing yaw
+	local torso = limb("Torso", x - 0.7, x + 0.7, y + 3.2, y + 6.2, z - 0.4, z + 0.4)
+	limb("Head", x - 0.55, x + 0.55, y + 6.2, y + 7.5, z - 0.45, z + 0.45, Color3.fromRGB(40, 40, 42))
+	limb("LArm", x - 1.3, x - 0.7, y + 3.4, y + 6.0, z - 0.3, z + 0.3)
+	limb("RArm", x + 0.7, x + 1.3, y + 3.4, y + 6.0, z - 0.3, z + 0.3)
+	limb("LLeg", x - 0.65, x - 0.1, y, y + 3.2, z - 0.35, z + 0.35)
+	limb("RLeg", x + 0.1, x + 0.65, y, y + 3.2, z - 0.35, z + 0.35)
+	local vest = limb("Vest", x - 0.75, x + 0.75, y + 3.5, y + 5.8, z - 0.55, z - 0.35, C.red)
+	sign(vest, Enum.NormalId.Front, "SECURITY", C.white, nil, "GothamBlack")
+	-- rotate whole model around Y
+	local cf = CFrame.new(x, y + 3.75, z) * CFrame.Angles(0, math.rad(yawDeg), 0)
+	for _, p in ipairs(model:GetChildren()) do
+		if p:IsA("BasePart") then
+			local rel = CFrame.new(x, y + 3.75, z):ToObjectSpace(p.CFrame)
+			p.CFrame = cf * rel
+		end
+	end
+	local tag = Instance.new("BillboardGui")
+	tag.Name = "BouncerTag"
+	tag.Size = UDim2.fromOffset(120, 28)
+	tag.StudsOffset = Vector3.new(0, 4.2, 0)
+	tag.AlwaysOnTop = true
+	tag.Parent = torso
+	local tl = Instance.new("TextLabel")
+	tl.Size = UDim2.fromScale(1, 1)
+	tl.BackgroundTransparency = 1
+	tl.Text = "BOUNCER"
+	tl.TextColor3 = C.red
+	tl.Font = Enum.Font.GothamBlack
+	tl.TextScaled = true
+	tl.Parent = tag
+	return model
+end
+
+local function makeIdCardProp(name, x0, x1, y0, y1, z0, z1, parent, face)
+	local card = box(name, x0, x1, y0, y1, z0, z1, C.white, M.SmoothPlastic, {
+		collide = false,
+		parent = parent,
+	})
+	sign(card, face or Enum.NormalId.Front, "BASEMENT\nGUEST ID", C.black, C.white, "GothamBlack")
+	local stripe = box(name .. "Stripe", x0, x1, y0, y0 + (y1 - y0) * 0.22, z0 - 0.02, z1 + 0.02, C.red, M.Neon, {
+		collide = false,
+		parent = parent,
+	})
+	return card
+end
+
+local function showPlayerIdCard(player)
+	local char = player.Character
+	if not char then
+		return
+	end
+	local hand = char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm") or char:FindFirstChild("Head")
+	if not hand then
+		return
+	end
+	local old = char:FindFirstChild("HeldGuestID")
+	if old then
+		old:Destroy()
+	end
+	local card = Instance.new("Part")
+	card.Name = "HeldGuestID"
+	card.Size = Vector3.new(0.08, 0.9, 1.4)
+	card.Color = C.white
+	card.Material = M.SmoothPlastic
+	card.CanCollide = false
+	card.Massless = true
+	card.CFrame = hand.CFrame * CFrame.new(0, -0.2, -0.6)
+	card.Parent = char
+	local w = Instance.new("WeldConstraint")
+	w.Part0 = hand
+	w.Part1 = card
+	w.Parent = card
+	sign(card, Enum.NormalId.Front, "ID OK", C.black, C.white, "GothamBlack")
+	sign(card, Enum.NormalId.Back, "BASEMENT", C.red, C.black, "GothamBlack")
+	task.delay(8, function()
+		if card.Parent then
+			card:Destroy()
+		end
+	end)
+end
+
+local function playDance(player)
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if not hum then
+		return
+	end
+	local animator = hum:FindFirstChildOfClass("Animator")
+	if not animator then
+		animator = Instance.new("Animator")
+		animator.Parent = hum
+	end
+	local id = DANCE_ANIM_IDS[math.random(1, #DANCE_ANIM_IDS)]
+	pcall(function()
+		local anim = Instance.new("Animation")
+		anim.AnimationId = id
+		local track = animator:LoadAnimation(anim)
+		track.Priority = Enum.AnimationPriority.Action
+		track.Looped = true
+		track:Play()
+		task.delay(12, function()
+			if track.IsPlaying then
+				track:Stop(0.4)
+			end
+		end)
+	end)
+end
+
+local function setupDjMusic(parentPart)
+	local sound = Instance.new("Sound")
+	sound.Name = "DJMusic"
+	sound.SoundId = DJ_MUSIC_ID
+	sound.Looped = true
+	sound.Volume = 0.55
+	sound.RollOffMode = Enum.RollOffMode.InverseTapered
+	sound.RollOffMinDistance = 12
+	sound.RollOffMaxDistance = 120
+	sound.Playing = true
+	sound.Parent = parentPart
+	-- soft global bed so courtyard still hears a pulse
+	local bed = SoundService:FindFirstChild("BasementMusicBed")
+	if bed then
+		bed:Destroy()
+	end
+	bed = Instance.new("Sound")
+	bed.Name = "BasementMusicBed"
+	bed.SoundId = DJ_MUSIC_ID
+	bed.Looped = true
+	bed.Volume = 0.12
+	bed.Playing = true
+	bed.Parent = SoundService
+	return sound
+end
+
+local function setupAvatars()
+	local function onCharacter(player, character)
+		task.defer(function()
+			task.wait(0.35)
+			if character.Parent then
+				dressAllBlack(character)
+			end
+		end)
+	end
+	local function onPlayer(player)
+		player.CharacterAdded:Connect(function(character)
+			onCharacter(player, character)
+		end)
+		if player.Character then
+			onCharacter(player, player.Character)
+		end
+	end
+	Players.PlayerAdded:Connect(onPlayer)
+	for _, p in ipairs(Players:GetPlayers()) do
+		onPlayer(p)
+	end
 end
 
 local function wallX(name, z, x0, x1, gaps, opts)
@@ -693,31 +975,38 @@ section("Entry", function()
 
 	local idPad = box("IDPad", -55.5, -53.5, FLOOR + 3.9, FLOOR + 4.2, 12.4, 13.1, C.green, M.Neon, { collide = false, parent = f })
 	idPad:SetAttribute("Interact", "ShowID")
-	makePrompt(idPad, "Show ID", "Security", 0.6, 10)
+	makePrompt(idPad, "Show ID", "Hold up your guest pass", 0.6, 10)
 
 	local dressPad = box("DressPad", -38, -35, FLOOR + 3.9, FLOOR + 4.2, 12.4, 13.1, C.red, M.Neon, { collide = false, parent = f })
 	dressPad:SetAttribute("Interact", "DressCode")
-	makePrompt(dressPad, "Dress-code check", "Security", 0.8, 10)
+	makePrompt(dressPad, "Dress-code check", "All black + harness", 0.8, 10)
 
 	deskID:SetAttribute("Interact", "ShowID")
 	deskDress:SetAttribute("Interact", "DressCode")
+
+	-- Visible guest ID cards on desks + bouncers
+	makeIdCardProp("DeskGuestID", -54.2, -52.6, FLOOR + 3.95, FLOOR + 4.05, 10.2, 11.4, f, Enum.NormalId.Top)
+	makeIdCardProp("SampleID", -56.5, -55.2, FLOOR + 4.0, FLOOR + 5.1, 12.5, 12.65, f, Enum.NormalId.Front)
+	makeBouncer("BouncerID", -54.5, 14.5, 0, f)
+	makeBouncer("BouncerDress", -36.5, 14.5, 0, f)
 
 	box("LockersWest", -59, -57, FLOOR, FLOOR + 8.5, 21, 44, C.metal, M.Metal, { parent = f })
 	seamsAlongZ(21, 44, 1.5, FLOOR + 0.3, FLOOR + 8.2, -56.95, C.nearBlack, f)
 	box("LockersNorth", -56, -33, FLOOR, FLOOR + 8.5, 42, 44, C.metal, M.Metal, { parent = f })
 	seamsAlongX(-56, -33, 1.5, FLOOR + 0.3, FLOOR + 8.2, 41.95, C.nearBlack, f)
 	box("LockerShelf", -56, -33, FLOOR + 4.2, FLOOR + 4.35, 41.9, 42.05, C.nearBlack, M.Metal, { collide = false, parent = f })
-	panel("LockersSign", -50, -39, FLOOR + 10, FLOOR + 12.2, 43.6, 43.9, Enum.NormalId.Front, "LOCKERS", C.white, C.black, "GothamBlack", f)
+	panel("LockersSign", -50, -39, FLOOR + 10, FLOOR + 12.2, 43.6, 43.9, Enum.NormalId.Front, "LOCKERS — BAGS & COATS", C.white, C.black, "GothamBlack", f)
 	box("Bench", -50, -40, FLOOR, FLOOR + 1.6, 30, 32, C.wood, M.WoodPlanks, { parent = f })
 	lamp("LockerLight", -45, CEIL - 2, 34, C.amber, 1.3, 30, f)
 
-	-- Clickable locker doors (coats in + lock)
+	-- Clickable locker doors (bag + coat + lock)
 	for i = 0, 5 do
 		local z0 = 22 + i * 3.5
 		local door = box("LockerDoor", -56.9, -56.55, FLOOR + 1.5, FLOOR + 7.5, z0, z0 + 2.8, C.steel, M.Metal, { parent = f })
 		door:SetAttribute("Interact", "Locker")
 		door:SetAttribute("LockerId", i + 1)
-		makePrompt(door, "Put coat & lock", "Locker " .. (i + 1), 1.0, 8)
+		door:SetAttribute("LockerZ", z0)
+		makePrompt(door, "Put bag & coat · lock", "Locker " .. (i + 1), 1.0, 8)
 	end
 end)
 
@@ -774,7 +1063,8 @@ end)
 section("Main floor", function()
 	local f = folder("6 Basement Main Floor")
 	box("DJRiser", -40, -20, FLOOR, FLOOR + 3, 89, 99, C.concreteDark, M.Concrete, { parent = f })
-	box("DJDesk", -36, -24, FLOOR + 3, FLOOR + 6.5, 91, 93.5, C.black, M.SmoothPlastic, { parent = f })
+	local djDesk = box("DJDesk", -36, -24, FLOOR + 3, FLOOR + 6.5, 91, 93.5, C.black, M.SmoothPlastic, { parent = f })
+	setupDjMusic(djDesk)
 	for i, x in ipairs({ -35, -31.4, -27.6 }) do
 		local w = (i == 2) and 2.4 or 3.4
 		box("Deck", x, x + w, FLOOR + 6.5, FLOOR + 6.9, 91.4, 93.1, C.metal, M.Metal, { collide = false, parent = f })
@@ -871,14 +1161,38 @@ section("Main floor", function()
 	makePrompt(drinkPad, "Buy drink", "Bar", 0.7, 10)
 	barCounter:SetAttribute("Interact", "Drink")
 
-	-- Dance floor pad (main room center)
+	-- Dance floor pad (main room center) — press E / tap prompt
 	local dance = box("DanceFloor", -40, -20, FLOOR + 0.05, FLOOR + 0.12, 58, 78, C.nearBlack, M.Neon, {
 		collide = false,
-		transparency = 0.85,
+		transparency = 0.75,
 		parent = f,
 	})
 	dance:SetAttribute("Interact", "Dance")
-	makePrompt(dance, "Dance", "Floor", 0, 14)
+	local dancePrompt = makePrompt(dance, "Press E to dance", "Dancefloor — stand here", 0, 16)
+	dancePrompt.GamepadKeyCode = Enum.KeyCode.ButtonX
+	dancePrompt.KeyboardKeyCode = Enum.KeyCode.E
+	local danceSign = box("DanceHint", -32, -28, FLOOR + 6, FLOOR + 8, 67.5, 68, C.black, M.SmoothPlastic, {
+		collide = false,
+		transparency = 1,
+		parent = f,
+	})
+	local bb = Instance.new("BillboardGui")
+	bb.Name = "DanceHowTo"
+	bb.Size = UDim2.fromOffset(220, 54)
+	bb.StudsOffset = Vector3.new(0, 2, 0)
+	bb.AlwaysOnTop = true
+	bb.MaxDistance = 55
+	bb.Parent = danceSign
+	local bbLabel = Instance.new("TextLabel")
+	bbLabel.Size = UDim2.fromScale(1, 1)
+	bbLabel.BackgroundColor3 = Color3.fromRGB(8, 8, 10)
+	bbLabel.BackgroundTransparency = 0.25
+	bbLabel.BorderSizePixel = 0
+	bbLabel.Text = "HOW TO DANCE\nStand on the floor → press E"
+	bbLabel.TextColor3 = Color3.fromRGB(255, 230, 220)
+	bbLabel.Font = Enum.Font.GothamBold
+	bbLabel.TextScaled = true
+	bbLabel.Parent = bb
 	for k = 0, 1 do
 		local y = FLOOR + 5 + k * 2.4
 		box("BackShelf", -57, -37, y, y + 0.25, 46, 47, C.metal, M.Metal, { collide = false, parent = f })
@@ -1166,10 +1480,11 @@ section("Break Time", function()
 end)
 
 ----------------------------------------------------------------
--- 11. INTERACTIONS (ProximityPrompts — server-side, no LocalScript)
+-- 11. INTERACTIONS (ProximityPrompts — server-side)
 ----------------------------------------------------------------
 section("Interactions", function()
 	local state = {} -- [userId] = { id, dress, locker, ... }
+	local lockerBags = folder("LockerBags", root)
 
 	local function st(player)
 		local id = player.UserId
@@ -1190,6 +1505,15 @@ section("Interactions", function()
 		return state[id]
 	end
 
+	local function succeed(player, message)
+		task.spawn(function()
+			playPew(player)
+		end)
+		if message then
+			notify(player, message)
+		end
+	end
+
 	local function tryOpenGate(player)
 		local s = st(player)
 		if s.id and s.dress then
@@ -1198,7 +1522,7 @@ section("Interactions", function()
 				gate.CanCollide = false
 				gate.Transparency = 1
 			end
-			notify(player, "You're in. Lockers → hub → floor.")
+			notify(player, "Gate open. Lockers → bag & coat → floor.")
 		end
 	end
 
@@ -1206,13 +1530,17 @@ section("Interactions", function()
 		ShowID = function(player)
 			local s = st(player)
 			s.id = true
-			notify(player, "ID checked. Next: dress-code.")
+			showPlayerIdCard(player)
+			succeed(player, "ID shown to bouncer. Next: dress-code.")
 			tryOpenGate(player)
 		end,
 		DressCode = function(player)
 			local s = st(player)
 			s.dress = true
-			notify(player, "Dress code OK. All black. Proceed.")
+			if player.Character then
+				dressAllBlack(player.Character)
+			end
+			succeed(player, "Dress code OK — all black + harness.")
 			tryOpenGate(player)
 		end,
 		Locker = function(player, part)
@@ -1223,42 +1551,51 @@ section("Interactions", function()
 			end
 			s.locker = true
 			local n = part and part:GetAttribute("LockerId") or "?"
-			notify(player, "Coat in locker " .. tostring(n) .. ". Locked.")
+			local z0 = part and part:GetAttribute("LockerZ") or 22
+			-- bag + coat props appear inside the locker bay
+			local bagName = "Bag_" .. tostring(player.UserId)
+			local old = lockerBags:FindFirstChild(bagName)
+			if old then
+				old:Destroy()
+			end
+			box(bagName, -58.6, -57.4, FLOOR + 1.2, FLOOR + 3.0, z0 + 0.4, z0 + 1.6, C.black, M.Leather, {
+				collide = false,
+				parent = lockerBags,
+			})
+			box("Coat_" .. tostring(player.UserId), -58.5, -57.5, FLOOR + 3.2, FLOOR + 6.5, z0 + 0.6, z0 + 1.4, C.nearBlack, M.Fabric, {
+				collide = false,
+				parent = lockerBags,
+			})
+			succeed(player, "Bag + coat in locker " .. tostring(n) .. ". Locked.")
 		end,
 		Snack = function(player)
 			st(player).snack = true
-			notify(player, "Snack acquired. $0 tonight.")
+			succeed(player, "Snack acquired. $0 tonight.")
 		end,
 		Drink = function(player)
 			st(player).drink = true
-			notify(player, "Drink in hand. Cheers.")
+			succeed(player, "Drink in hand. Cheers.")
 		end,
 		Water = function(player)
 			st(player).water = true
-			notify(player, "Cold water. Hydrate.")
+			succeed(player, "Cold water. Hydrate.")
 		end,
 		Dance = function(player)
 			st(player).danced = true
-			notify(player, "You're on the floor.")
-			local char = player.Character
-			local hum = char and char:FindFirstChildOfClass("Humanoid")
-			if hum then
-				pcall(function()
-					hum.Jump = true
-				end)
-			end
+			playDance(player)
+			succeed(player, "Dancing — stay on the floor (E again to refresh).")
 		end,
 		ToiletPaper = function(player)
 			st(player).tp = true
-			notify(player, "Paper grabbed.")
+			succeed(player, "Paper grabbed.")
 		end,
 		Flush = function(player)
 			st(player).flushed = true
-			notify(player, "Flushed.")
+			succeed(player, "Flushed.")
 		end,
 		WashHands = function(player)
 			st(player).washed = true
-			notify(player, "Hands washed. Back to the floor.")
+			succeed(player, "Hands washed. Back to the floor.")
 		end,
 	}
 
@@ -1294,7 +1631,7 @@ section("Interactions", function()
 		state[player.UserId] = nil
 	end)
 
-	log("Interactions live: ID → dress → lockers → snacks/drinks/water → dance → stalls.")
+	log("Interactions live: ID → dress → bag/coat lockers → snacks/drinks/water → dance → stalls.")
 end)
 
 ----------------------------------------------------------------
@@ -1341,10 +1678,12 @@ task.spawn(function()
 	end
 end)
 
+setupAvatars()
+
 for _, player in ipairs(Players:GetPlayers()) do
 	pcall(function()
 		player:LoadCharacter()
 	end)
 end
 
-log("Club built. You spawn at the back of the line in the courtyard.")
+log("Club built. All-black + harness, DJ music, pew-pew on stops. Spawn in courtyard line.")

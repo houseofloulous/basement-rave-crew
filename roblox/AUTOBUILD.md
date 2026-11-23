@@ -1,17 +1,14 @@
-# Auto-build Basement — v3 bright path (one paste)
+# Auto-build Basement — one paste
 
-**One release.** Paste once, Play once. Over-lit + flat solid floor. Avatars later. Free Roblox only.
+Paste the full `BuildBasement.server.lua` into **ServerScriptService → Script**. Leave it there — it rebuilds on every Play / join.
 
 ## Steps
 
 1. Roblox Studio → open **Basement Rave Crew** (or New → Baseplate)
-2. Explorer → **ServerScriptService** → Script (replace contents)
-3. Paste entire [`BuildBasement.server.lua`](https://raw.githubusercontent.com/houseofloulous/basement-rave-crew/main/roblox/BuildBasement.server.lua)
-4. **View → Output** → **Play ▶** → wait for `v3 BRIGHT PATH built`
-5. Walk the club → **Stop** → **Publish to Roblox**
+2. Explorer → **ServerScriptService** → **+** → **Script** (or replace existing)
+3. Paste entire file from:  
+   https://raw.githubusercontent.com/houseofloulous/basement-rave-crew/main/roblox/BuildBasement.server.lua
+4. **Play ▶** once — wait for `[Basement] Club built…`
+5. Walk courtyard → gate → club → **Stop** → **Publish**
 
-## Path
-
-courtyard → gate → tunnel → security → **LOCKERS** → main/Charlotte → studio / dark rooms → **BATHROOMS** → Break Time
-
-Flat floor (no underground drop). No fog crush. Spine floods along the route.
+Builds `Workspace.BasementClub` (also clears old `BasementAuto`). Avatars later.

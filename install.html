@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Basement — free Mac setup (Roblox)</title>
+  <title>Basement — auto-build on Roblox (free)</title>
   <style>
     :root {
       --bg: #0a0809;
@@ -73,44 +73,40 @@
       text-transform: uppercase;
       font-size: 0.8rem;
     }
+    code { color: #ffd0c8; font-size: 0.9em; }
   </style>
 </head>
 <body>
   <main>
     <a class="back" href="index.html">← Door</a>
-    <div class="tag">Mad Max Crew · Free on Mac</div>
+    <div class="tag">Mad Max Crew · Auto-build · Free</div>
     <h1>Basement on Roblox</h1>
     <p>
-      You’re not paying for CrossOver — got it. The free realistic path is
-      <strong style="color:#fff">Roblox</strong>: Mac-native, free Studio, real avatars,
-      friends can join. Still more game-like than the old browser sketch.
+      No hand-placing walls for hours. One free Roblox Studio script
+      <strong style="color:#fff">builds the whole club</strong> when you paste and press Play.
+      Focus now: <strong style="color:#fff">make the rooms feel real</strong>. Avatars later.
     </p>
 
     <div class="status">
-      <strong style="color:#fff">GTA SA path paused</strong> (needs paid CrossOver and/or the game).
-      Notes kept in <code>gta-sa-mod/</code> if that ever becomes free to run.
+      Script: <a href="roblox/BuildBasement.server.lua">roblox/BuildBasement.server.lua</a>
+      · Guide: <a href="roblox/AUTOBUILD.md">roblox/AUTOBUILD.md</a>
     </div>
 
-    <h2>1 · Free account</h2>
+    <h2>Do this once (~2 min)</h2>
     <ol>
-      <li>Create an account at <a href="https://www.roblox.com" target="_blank" rel="noopener">roblox.com</a>.</li>
-      <li>Install <strong>Roblox</strong> and <strong>Roblox Studio</strong> for Mac (both free).</li>
+      <li>Install free <a href="https://www.roblox.com/create" target="_blank" rel="noopener">Roblox Studio</a> and sign in.</li>
+      <li><strong>New → Baseplate</strong></li>
+      <li>Explorer → <strong>ServerScriptService → + → Script</strong></li>
+      <li>Paste the full contents of <code>BuildBasement.server.lua</code></li>
+      <li>Press <strong>Play ▶</strong> once — full club: courtyard → tunnel → security → lockers → main → studio → dark rooms → baths → backyard</li>
+      <li><strong>Stop</strong>, then <strong>Publish to Roblox</strong> as Basement Rave Crew</li>
     </ol>
 
-    <h2>2 · New place</h2>
-    <ol>
-      <li>Open Studio → New place → publish as <strong>Basement Rave Crew</strong>.</li>
-      <li>Follow <a href="roblox/MAC-SETUP.md">roblox/MAC-SETUP.md</a> and <a href="roblox/LAYOUT.md">LAYOUT.md</a>.</li>
-    </ol>
-
-    <h2>3 · Crew</h2>
-    <ol>
-      <li>Each person uses their own Roblox avatar (Mad Max / black techno fit).</li>
-      <li>Share the place link (Bitly if you want it pretty).</li>
-    </ol>
+    <h2>Friends</h2>
+    <p>Share the Roblox place link (Bitly if you want). Everyone joins with their own avatar — free.</p>
 
     <div class="note">
-      Always pick the more realistic <em>free</em> option. Details:
+      Paid CrossOver / GTA path is paused. Always prefer the more realistic <em>free</em> option.
       <a href="BUILD-PIVOT.md">BUILD-PIVOT.md</a>
     </div>
   </main>

@@ -9,9 +9,12 @@
   Layout (one level, underground, below a street-level courtyard):
     Courtyard (the line + VIP express) > gate > ramp down > tunnel
     > ID check + dress code > lockers > hub (water, snacks)
-    > Basement main floor (Charlotte de Witte, bar, lights)
+    > Basement main floor (Charlotte de Witte, bar, lights, dance)
     > dark rooms (nooks) > Break Time backyard (bar, 2nd bathroom)
-    > Studio (2nd DJ, 2nd bar) > The Stalls (main bathroom, Mad Max wall)
+    > Studio (2nd DJ, 2nd bar) > The Stalls (toilets, TP, flush, sinks, graffiti)
+
+  Interactions (ProximityPrompts, server-only): show ID → dress-code →
+  lockers → snacks/drinks/water → dance → toilet paper / flush / wash.
 
   Safe to re-run: it deletes its previous build first.
 ]]
@@ -215,6 +218,85 @@ local function panel(name, x0, x1, y0, y1, z0, z1, face, text, textColor, bg, fo
 	})
 	sign(p, face, text, textColor, (not invisible) and bg or nil, fontName)
 	return p
+end
+
+-- Dense layered graffiti (Mad Max / crew / abstract — no political slogans)
+local GRAFFITI_TAGS = {
+	"MAD MAX", "RAVE CREW", "4 EVA", "VOID", "BC-88", "BASEMENT",
+	"ALL BLACK", "NO PHOTOS", "CHARLOTTE", "KNOCKDOWN", "CREW",
+	"XXX", ">>>", "///", "SAM", "MIKE", "MAX", "CHRIS", "LOULOUS",
+	"BERG", "PULSE", "WRECK", "NIGHT", "GRID", "HORN", "FOG",
+}
+
+local function graffitiOn(part, face, density)
+	density = density or 14
+	local rng = Random.new((part.Position.X * 17 + part.Position.Z * 31) % 100000)
+	for i = 1, density do
+		local gui = Instance.new("SurfaceGui")
+		gui.Name = "Graffiti" .. i
+		gui.Face = face
+		gui.LightInfluence = 0.15
+		gui.ZOffset = i
+		gui.CanvasSize = Vector2.new(512, 512)
+		gui.Parent = part
+		local label = Instance.new("TextLabel")
+		local sx = 0.12 + rng:NextNumber() * 0.45
+		local sy = 0.08 + rng:NextNumber() * 0.28
+		label.Size = UDim2.fromScale(sx, sy)
+		label.Position = UDim2.fromScale(rng:NextNumber() * (1 - sx), rng:NextNumber() * (1 - sy))
+		label.BackgroundTransparency = 1
+		label.BorderSizePixel = 0
+		label.Text = GRAFFITI_TAGS[(rng:NextInteger(1, #GRAFFITI_TAGS))]
+		local palette = { C.black, C.red, Color3.fromRGB(20, 20, 40), Color3.fromRGB(180, 40, 20), Color3.fromRGB(40, 40, 40) }
+		label.TextColor3 = palette[rng:NextInteger(1, #palette)]
+		label.TextTransparency = rng:NextNumber() * 0.35
+		label.TextScaled = true
+		label.Font = fontNamed((i % 3 == 0) and "PermanentMarker" or "GothamBlack")
+		label.Rotation = rng:NextNumber() * 24 - 12
+		label.Parent = gui
+	end
+end
+
+local function makePrompt(parent, actionText, objectText, hold, maxDist)
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.ActionText = actionText
+	prompt.ObjectText = objectText or ""
+	prompt.HoldDuration = hold or 0
+	prompt.MaxActivationDistance = maxDist or 10
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = parent
+	return prompt
+end
+
+local function notify(player, text)
+	local pg = player:FindFirstChild("PlayerGui") or player:WaitForChild("PlayerGui", 2)
+	if not pg then
+		return
+	end
+	local old = pg:FindFirstChild("BasementToast")
+	if old then
+		old:Destroy()
+	end
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "BasementToast"
+	gui.ResetOnSpawn = false
+	gui.Parent = pg
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(0.5, 0, 0, 40)
+	label.Position = UDim2.new(0.25, 0, 0.12, 0)
+	label.BackgroundColor3 = Color3.fromRGB(10, 10, 12)
+	label.BackgroundTransparency = 0.2
+	label.BorderSizePixel = 0
+	label.Text = text
+	label.TextColor3 = Color3.fromRGB(255, 240, 235)
+	label.Font = Enum.Font.GothamBold
+	label.TextScaled = true
+	label.Parent = gui
+	task.delay(2.8, function()
+		if gui.Parent then
+			gui:Destroy()
+		end
+	end)
 end
 
 local function wallX(name, z, x0, x1, gaps, opts)
@@ -523,7 +605,7 @@ section("Building shell", function()
 	box("FloorEntry", -60, -30, 0.4, FLOOR, 0, 45, C.concrete, M.Concrete, { parent = f })
 	box("FloorHub", -30, 15, 0.4, FLOOR, 0, 45, C.concreteDark, M.Concrete, { parent = f })
 	box("FloorStudio", 15, 60, 0.4, FLOOR, 0, 45, Color3.fromRGB(58, 56, 56), M.Concrete, { parent = f })
-	box("FloorStalls", 60, 90, 0.4, FLOOR, 0, 45, C.tile, M.CeramicTiles, { parent = f })
+	box("FloorStalls", 60, 90, 0.4, FLOOR, 0, 45, C.tile, M.SmoothPlastic, { parent = f })
 	box("FloorMain", -60, 0, 0.4, FLOOR, 45, 100, Color3.fromRGB(70, 40, 34), M.Brick, { parent = f })
 	box("FloorDark", 0, 35, 0.4, FLOOR, 45, 100, C.black, M.Slate, { parent = f })
 	box("FloorYard", 35, 90, 0.4, FLOOR, 45, 100, C.gravel, M.Pebble, { parent = f })
@@ -582,8 +664,8 @@ end)
 ----------------------------------------------------------------
 section("Entry", function()
 	local f = folder("4 Entry Security Lockers")
-	box("DeskID", -59, -50, FLOOR, FLOOR + 3.6, 10, 13, C.metal, M.DiamondPlate, { parent = f })
-	box("DeskDress", -42, -31, FLOOR, FLOOR + 3.6, 10, 13, C.metal, M.DiamondPlate, { parent = f })
+	local deskID = box("DeskID", -59, -50, FLOOR, FLOOR + 3.6, 10, 13, C.metal, M.DiamondPlate, { parent = f })
+	local deskDress = box("DeskDress", -42, -31, FLOOR, FLOOR + 3.6, 10, 13, C.metal, M.DiamondPlate, { parent = f })
 	box("DeskTopID", -59.2, -49.8, FLOOR + 3.6, FLOOR + 3.9, 9.8, 13.2, C.nearBlack, M.Rubber, { parent = f })
 	box("DeskTopDress", -42.2, -30.9, FLOOR + 3.6, FLOOR + 3.9, 9.8, 13.2, C.nearBlack, M.Rubber, { parent = f })
 	neon("ScannerScreen", -55, -53.5, FLOOR + 3.9, FLOOR + 4.9, 11.5, 11.7, C.green, f)
@@ -604,6 +686,22 @@ section("Entry", function()
 	local fluoro = neon("DeskFluoro", -58, -32, CEIL - 0.6, CEIL - 0.3, 11, 11.6, C.white, f)
 	addLight(fluoro, "SurfaceLight", C.white, 1.4, 16, { face = Enum.NormalId.Bottom, angle = 90 })
 
+	-- Gate until ID + dress-code cleared (per-player CanCollide handled in Interactions)
+	local gate = barrier(-50, -42, FLOOR, FLOOR + 9, 16.2, 16.9, f)
+	gate.Name = "SecurityGate"
+	gate:SetAttribute("InteractGate", true)
+
+	local idPad = box("IDPad", -55.5, -53.5, FLOOR + 3.9, FLOOR + 4.2, 12.4, 13.1, C.green, M.Neon, { collide = false, parent = f })
+	idPad:SetAttribute("Interact", "ShowID")
+	makePrompt(idPad, "Show ID", "Security", 0.6, 10)
+
+	local dressPad = box("DressPad", -38, -35, FLOOR + 3.9, FLOOR + 4.2, 12.4, 13.1, C.red, M.Neon, { collide = false, parent = f })
+	dressPad:SetAttribute("Interact", "DressCode")
+	makePrompt(dressPad, "Dress-code check", "Security", 0.8, 10)
+
+	deskID:SetAttribute("Interact", "ShowID")
+	deskDress:SetAttribute("Interact", "DressCode")
+
 	box("LockersWest", -59, -57, FLOOR, FLOOR + 8.5, 21, 44, C.metal, M.Metal, { parent = f })
 	seamsAlongZ(21, 44, 1.5, FLOOR + 0.3, FLOOR + 8.2, -56.95, C.nearBlack, f)
 	box("LockersNorth", -56, -33, FLOOR, FLOOR + 8.5, 42, 44, C.metal, M.Metal, { parent = f })
@@ -612,6 +710,15 @@ section("Entry", function()
 	panel("LockersSign", -50, -39, FLOOR + 10, FLOOR + 12.2, 43.6, 43.9, Enum.NormalId.Front, "LOCKERS", C.white, C.black, "GothamBlack", f)
 	box("Bench", -50, -40, FLOOR, FLOOR + 1.6, 30, 32, C.wood, M.WoodPlanks, { parent = f })
 	lamp("LockerLight", -45, CEIL - 2, 34, C.amber, 1.3, 30, f)
+
+	-- Clickable locker doors (coats in + lock)
+	for i = 0, 5 do
+		local z0 = 22 + i * 3.5
+		local door = box("LockerDoor", -56.9, -56.55, FLOOR + 1.5, FLOOR + 7.5, z0, z0 + 2.8, C.steel, M.Metal, { parent = f })
+		door:SetAttribute("Interact", "Locker")
+		door:SetAttribute("LockerId", i + 1)
+		makePrompt(door, "Put coat & lock", "Locker " .. (i + 1), 1.0, 8)
+	end
 end)
 
 ----------------------------------------------------------------
@@ -625,13 +732,15 @@ section("Hub", function()
 	box("WaterTrough", -24, -14, FLOOR, FLOOR + 3.4, 1, 3.4, C.steel, M.Metal, { parent = f })
 	box("WaterBasin", -23.5, -14.5, FLOOR + 3.1, FLOOR + 3.45, 1.4, 3, C.nearBlack, M.Metal, { collide = false, parent = f })
 	for _, x in ipairs({ -22, -19, -16 }) do
-		box("Tap", x - 0.2, x + 0.2, FLOOR + 3.4, FLOOR + 5.2, 1.2, 1.6, C.steel, M.Metal, { collide = false, parent = f })
+		local tap = box("Tap", x - 0.2, x + 0.2, FLOOR + 3.4, FLOOR + 5.2, 1.2, 1.6, C.steel, M.Metal, { collide = false, parent = f })
+		tap:SetAttribute("Interact", "Water")
+		makePrompt(tap, "Get water", "Free water", 0.5, 8)
 	end
 	neon("WaterGlow", -24, -14, FLOOR + 6, FLOOR + 6.3, 1.05, 1.2, C.ice, f)
 	panel("WaterSign", -22, -16, FLOOR + 7, FLOOR + 9, 1.05, 1.35, Enum.NormalId.Back, "WATER", C.ice, C.black, "GothamBlack", f)
 	lamp("WaterLight", -19, FLOOR + 7, 4, C.ice, 1, 12, f)
 
-	box("SnackMachine", -7, -1, FLOOR, FLOOR + 8.5, 1, 4, C.nearBlack, M.Metal, { parent = f })
+	local snackMachine = box("SnackMachine", -7, -1, FLOOR, FLOOR + 8.5, 1, 4, C.nearBlack, M.Metal, { parent = f })
 	box("SnackGlass", -6.6, -2.6, FLOOR + 2.2, FLOOR + 7.6, 4.0, 4.15, C.glass, M.Glass, {
 		collide = false,
 		transparency = 0.4,
@@ -648,7 +757,10 @@ section("Hub", function()
 			neon("Snack", x, x + 0.8, y, y + 0.7, 3.6, 3.95, snackColors[(n % #snackColors) + 1], f)
 		end
 	end
-	neon("SnackKeypad", -2.3, -1.4, FLOOR + 4, FLOOR + 6, 4.0, 4.15, C.green, f)
+	local keypad = neon("SnackKeypad", -2.3, -1.4, FLOOR + 4, FLOOR + 6, 4.0, 4.15, C.green, f)
+	keypad:SetAttribute("Interact", "Snack")
+	makePrompt(keypad, "Buy snack", "Vending", 0.6, 8)
+	snackMachine:SetAttribute("Interact", "Snack")
 	panel("SnackSign", -6.6, -1.4, FLOOR + 7.7, FLOOR + 8.4, 4.0, 4.15, Enum.NormalId.Back, "SNACKS", C.white, C.red, "GothamBlack", f)
 	lamp("SnackLight", -4, FLOOR + 6, 6, C.ice, 0.8, 10, f)
 
@@ -751,9 +863,22 @@ section("Main floor", function()
 		table.insert(FX.lasers, beam)
 	end
 
-	box("BarCounter", -57, -37, FLOOR, FLOOR + 3.6, 48, 50.5, C.nearBlack, M.Concrete, { parent = f })
+	local barCounter = box("BarCounter", -57, -37, FLOOR, FLOOR + 3.6, 48, 50.5, C.nearBlack, M.Concrete, { parent = f })
 	box("BarTop", -57.3, -36.7, FLOOR + 3.6, FLOOR + 4, 47.8, 50.8, C.wood, M.Wood, { parent = f })
 	neon("BarUnderglow", -57, -37, FLOOR + 0.3, FLOOR + 0.5, 50.5, 50.7, C.red, f)
+	local drinkPad = box("DrinkPad", -48, -44, FLOOR + 4, FLOOR + 4.15, 49.2, 50.2, C.amber, M.Neon, { collide = false, parent = f })
+	drinkPad:SetAttribute("Interact", "Drink")
+	makePrompt(drinkPad, "Buy drink", "Bar", 0.7, 10)
+	barCounter:SetAttribute("Interact", "Drink")
+
+	-- Dance floor pad (main room center)
+	local dance = box("DanceFloor", -40, -20, FLOOR + 0.05, FLOOR + 0.12, 58, 78, C.nearBlack, M.Neon, {
+		collide = false,
+		transparency = 0.85,
+		parent = f,
+	})
+	dance:SetAttribute("Interact", "Dance")
+	makePrompt(dance, "Dance", "Floor", 0, 14)
 	for k = 0, 1 do
 		local y = FLOOR + 5 + k * 2.4
 		box("BackShelf", -57, -37, y, y + 0.25, 46, 47, C.metal, M.Metal, { collide = false, parent = f })
@@ -883,55 +1008,79 @@ section("Studio", function()
 end)
 
 ----------------------------------------------------------------
--- 9. THE STALLS
+-- 9. THE STALLS (real toilets + dense layered graffiti)
 ----------------------------------------------------------------
 section("The Stalls", function()
 	local f = folder("9 The Stalls")
 	local top = CEIL
-	wallZ("TileW", 61.1, 1, 44, { { 4, 14 } }, { y0 = FLOOR, y1 = top, thick = 0.2, color = C.tile, material = M.CeramicTiles, parent = f })
-	wallZ("TileE", 88.9, 1, 44, {}, { y0 = FLOOR, y1 = top, thick = 0.2, color = C.tile, material = M.CeramicTiles, parent = f })
-	wallX("TileS", 1.1, 61, 89, {}, { y0 = FLOOR, y1 = top, thick = 0.2, color = C.tile, material = M.CeramicTiles, parent = f })
-	wallX("TileN", 43.9, 61, 89, {}, { y0 = FLOOR, y1 = top, thick = 0.2, color = C.tile, material = M.CeramicTiles, parent = f })
+	local stallH = FLOOR + 9
+	local tileMat = M.SmoothPlastic -- ceramic look without enum risk
+	wallZ("TileW", 61.1, 1, 44, { { 4, 14 } }, { y0 = FLOOR, y1 = top, thick = 0.2, color = C.tile, material = tileMat, parent = f })
+	wallZ("TileE", 88.9, 1, 44, {}, { y0 = FLOOR, y1 = top, thick = 0.2, color = C.tile, material = tileMat, parent = f })
+	wallX("TileS", 1.1, 61, 89, {}, { y0 = FLOOR, y1 = top, thick = 0.2, color = C.tile, material = tileMat, parent = f })
+	wallX("TileN", 43.9, 61, 89, {}, { y0 = FLOOR, y1 = top, thick = 0.2, color = C.tile, material = tileMat, parent = f })
+
+	local eastGraff = box("EastGraffitiWall", 88.55, 88.7, FLOOR, stallH, 3, 42, C.tile, M.SmoothPlastic, {
+		collide = false,
+		parent = f,
+	})
+	graffitiOn(eastGraff, Enum.NormalId.Left, 22)
+	local westGraff = box("WestGraffitiWall", 61.3, 61.45, FLOOR, stallH, 16, 40, C.tile, M.SmoothPlastic, {
+		collide = false,
+		parent = f,
+	})
+	graffitiOn(westGraff, Enum.NormalId.Right, 16)
 
 	local edges = { 3, 9.6, 16.2, 22.8, 29.4, 36.0, 42.6 }
-	local stallH = FLOOR + 9
 	for i, z in ipairs(edges) do
-		box("StallPartition", 80, 88.8, FLOOR, stallH, z - 0.2, z + 0.2, C.white, M.SmoothPlastic, { parent = f })
+		local part = box("StallPartition", 80, 88.8, FLOOR, stallH, z - 0.2, z + 0.2, C.white, M.SmoothPlastic, { parent = f })
+		graffitiOn(part, Enum.NormalId.Front, 10)
+		graffitiOn(part, Enum.NormalId.Back, 10)
 		if i < #edges then
 			local zA, zB = z, edges[i + 1]
-			box("StallFront", 80, 80.4, FLOOR, stallH, zA, zA + 1.05, C.white, M.SmoothPlastic, { parent = f })
-			box("StallFront", 80, 80.4, FLOOR, stallH, zB - 1.05, zB, C.white, M.SmoothPlastic, { parent = f })
+			local doorL = box("StallFront", 80, 80.4, FLOOR, stallH, zA, zA + 1.05, C.nearBlack, M.Metal, { parent = f })
+			local doorR = box("StallFront", 80, 80.4, FLOOR, stallH, zB - 1.05, zB, C.nearBlack, M.Metal, { parent = f })
+			graffitiOn(doorL, Enum.NormalId.Right, 8)
+			graffitiOn(doorR, Enum.NormalId.Right, 8)
+			box("Latch", 79.7, 80.1, FLOOR + 4, FLOOR + 4.6, (zA + zB) / 2 - 0.15, (zA + zB) / 2 + 0.15, C.steel, M.Metal, { collide = false, parent = f })
+
 			local mid = (zA + zB) / 2
-			box("Toilet", 86.4, 88.8, FLOOR, FLOOR + 2.2, mid - 1, mid + 1, C.white, M.SmoothPlastic, { parent = f })
-			box("ToiletTank", 88, 88.8, FLOOR + 2.2, FLOOR + 4.4, mid - 1, mid + 1, C.white, M.SmoothPlastic, { parent = f })
+			-- Real toilet: bowl, seat, tank, flush handle, TP dispenser + rolls
+			box("ToiletBowl", 86.2, 88.2, FLOOR, FLOOR + 1.6, mid - 0.9, mid + 0.9, C.white, M.SmoothPlastic, { parent = f })
+			box("ToiletSeat", 86.1, 88.3, FLOOR + 1.55, FLOOR + 1.75, mid - 1.0, mid + 1.0, C.white, M.SmoothPlastic, { collide = false, parent = f })
+			box("ToiletTank", 87.6, 88.8, FLOOR + 1.6, FLOOR + 4.2, mid - 1.0, mid + 1.0, C.white, M.SmoothPlastic, { parent = f })
+			local flush = box("FlushHandle", 87.4, 87.7, FLOOR + 3.4, FLOOR + 3.7, mid + 0.7, mid + 1.05, C.steel, M.Metal, { collide = false, parent = f })
+			flush:SetAttribute("Interact", "Flush")
+			makePrompt(flush, "Flush", "Toilet", 0.4, 8)
+
+			local tp = box("TPDispenser", 85.2, 86.0, FLOOR + 3.2, FLOOR + 4.4, zA + 0.35, zA + 1.1, C.nearBlack, M.Metal, { parent = f })
+			box("TPRoll", 85.35, 85.85, FLOOR + 3.4, FLOOR + 4.1, zA + 0.45, zA + 1.0, C.white, M.SmoothPlastic, { collide = false, parent = f })
+			tp:SetAttribute("Interact", "ToiletPaper")
+			makePrompt(tp, "Take paper", "Toilet paper", 0, 8)
+
+			box("SpareTP", 87.8, 88.5, FLOOR + 4.2, FLOOR + 4.7, mid - 0.7, mid - 0.2, C.white, M.SmoothPlastic, { collide = false, parent = f })
+			box("SpareTP", 87.8, 88.5, FLOOR + 4.2, FLOOR + 4.7, mid + 0.2, mid + 0.7, C.white, M.SmoothPlastic, { collide = false, parent = f })
+
+			local sideTag = box("StallGraffiti", 81, 87.5, FLOOR + 2, stallH - 0.5, z + 0.25, z + 0.35, C.white, M.SmoothPlastic, {
+				collide = false,
+				transparency = 1,
+				parent = f,
+			})
+			graffitiOn(sideTag, Enum.NormalId.Front, 12)
 		end
 	end
 
 	panel("MadMaxStall", 88.6, 88.75, FLOOR + 4.6, FLOOR + 9.2, 23.4, 28.8, Enum.NormalId.Left, "MAD MAX RAVE CREW 4 EVA!", C.red, nil, "PermanentMarker", f, true)
-	local tags = {
-		{ "SAM", 22.8 + 0.25, Enum.NormalId.Back },
-		{ "MIKE", 29.4 - 0.25, Enum.NormalId.Front },
-	}
-	for _, t in ipairs(tags) do
-		local z = t[2]
-		local p = box("Tag", 82.5, 86, FLOOR + 5, FLOOR + 7, z - 0.03, z + 0.03, C.black, M.SmoothPlastic, {
-			collide = false,
-			transparency = 1,
-			shadow = false,
-			parent = f,
-		})
-		sign(p, t[3], t[1], C.black, nil, "PermanentMarker")
-	end
-	local p2 = box("Tag", 82.5, 86, FLOOR + 2.4, FLOOR + 4.4, 23.02, 23.08, C.black, M.SmoothPlastic, { collide = false, transparency = 1, shadow = false, parent = f })
-	sign(p2, Enum.NormalId.Back, "MAX", C.red, nil, "PermanentMarker")
-	local p3 = box("Tag", 82.5, 86, FLOOR + 2.4, FLOOR + 4.4, 29.12, 29.18, C.black, M.SmoothPlastic, { collide = false, transparency = 1, shadow = false, parent = f })
-	sign(p3, Enum.NormalId.Front, "CHRIS", C.red, nil, "PermanentMarker")
 	panel("MadMaxMural", 64, 86, FLOOR + 9.5, FLOOR + 15.5, 43.75, 43.8, Enum.NormalId.Front, "MAD MAX RAVE CREW 4 EVA!", C.red, nil, "PermanentMarker", f, true)
+	local muralBoard = box("MuralBoard", 64, 86, FLOOR + 9.5, FLOOR + 15.5, 43.6, 43.7, C.nearBlack, M.SmoothPlastic, { collide = false, parent = f })
+	graffitiOn(muralBoard, Enum.NormalId.Front, 18)
 
 	box("SinkCounter", 61.2, 64, FLOOR, FLOOR + 3.6, 17, 39, C.concrete, M.Marble, { parent = f })
 	for _, z in ipairs({ 20, 25, 30, 35 }) do
 		box("Basin", 61.8, 63.4, FLOOR + 3.3, FLOOR + 3.65, z - 1, z + 1, C.white, M.SmoothPlastic, { collide = false, parent = f })
-		box("Faucet", 61.3, 61.8, FLOOR + 3.6, FLOOR + 4.8, z - 0.15, z + 0.15, C.steel, M.Metal, { collide = false, parent = f })
+		local faucet = box("Faucet", 61.3, 61.8, FLOOR + 3.6, FLOOR + 4.8, z - 0.15, z + 0.15, C.steel, M.Metal, { collide = false, parent = f })
+		faucet:SetAttribute("Interact", "WashHands")
+		makePrompt(faucet, "Wash hands", "Sink", 0.8, 8)
 	end
 	box("Mirror", 61.2, 61.35, FLOOR + 5.5, FLOOR + 11, 17, 39, C.steel, M.Glass, { reflectance = 0.6, collide = false, parent = f })
 
@@ -949,11 +1098,11 @@ section("Break Time", function()
 	wallZ("WC2Wall", 70, 72, 100, { { 80, 90 } }, { y0 = 0, y1 = FLOOR + 15, color = C.brick, material = M.Brick, parent = f })
 	wallX("WC2Wall", 72, 70, 90, {}, { y0 = 0, y1 = FLOOR + 15, color = C.brick, material = M.Brick, parent = f })
 	box("WC2Roof", 69, 90, FLOOR + 14, FLOOR + 15, 71, 100, C.concreteDark, M.Concrete, { parent = f })
-	box("WC2Floor", 70, 90, 0.45, FLOOR + 0.05, 72, 100, C.tile, M.CeramicTiles, { parent = f })
-	wallZ("WC2TileW", 71.1, 73, 99, { { 80, 90 } }, { y0 = FLOOR, y1 = FLOOR + 14, thick = 0.2, color = C.tile, material = M.CeramicTiles, parent = f })
-	wallX("WC2TileS", 73.1, 71, 89, {}, { y0 = FLOOR, y1 = FLOOR + 14, thick = 0.2, color = C.tile, material = M.CeramicTiles, parent = f })
-	wallX("WC2TileN", 98.9, 71, 89, {}, { y0 = FLOOR, y1 = FLOOR + 14, thick = 0.2, color = C.tile, material = M.CeramicTiles, parent = f })
-	wallZ("WC2TileE", 88.9, 73, 99, {}, { y0 = FLOOR, y1 = FLOOR + 14, thick = 0.2, color = C.tile, material = M.CeramicTiles, parent = f })
+	box("WC2Floor", 70, 90, 0.45, FLOOR + 0.05, 72, 100, C.tile, M.SmoothPlastic, { parent = f })
+	wallZ("WC2TileW", 71.1, 73, 99, { { 80, 90 } }, { y0 = FLOOR, y1 = FLOOR + 14, thick = 0.2, color = C.tile, material = M.SmoothPlastic, parent = f })
+	wallX("WC2TileS", 73.1, 71, 89, {}, { y0 = FLOOR, y1 = FLOOR + 14, thick = 0.2, color = C.tile, material = M.SmoothPlastic, parent = f })
+	wallX("WC2TileN", 98.9, 71, 89, {}, { y0 = FLOOR, y1 = FLOOR + 14, thick = 0.2, color = C.tile, material = M.SmoothPlastic, parent = f })
+	wallZ("WC2TileE", 88.9, 73, 99, {}, { y0 = FLOOR, y1 = FLOOR + 14, thick = 0.2, color = C.tile, material = M.SmoothPlastic, parent = f })
 	local xs = { 71.2, 77.0, 82.8, 88.8 }
 	for i, x in ipairs(xs) do
 		box("WC2Partition", x - 0.2, x + 0.2, FLOOR, FLOOR + 9, 91, 98.8, C.white, M.SmoothPlastic, { parent = f })
@@ -1017,7 +1166,139 @@ section("Break Time", function()
 end)
 
 ----------------------------------------------------------------
--- 11. LIGHT SHOW
+-- 11. INTERACTIONS (ProximityPrompts — server-side, no LocalScript)
+----------------------------------------------------------------
+section("Interactions", function()
+	local state = {} -- [userId] = { id, dress, locker, ... }
+
+	local function st(player)
+		local id = player.UserId
+		if not state[id] then
+			state[id] = {
+				id = false,
+				dress = false,
+				locker = false,
+				snack = false,
+				drink = false,
+				water = false,
+				danced = false,
+				tp = false,
+				flushed = false,
+				washed = false,
+			}
+		end
+		return state[id]
+	end
+
+	local function tryOpenGate(player)
+		local s = st(player)
+		if s.id and s.dress then
+			local gate = root:FindFirstChild("SecurityGate", true)
+			if gate and gate:IsA("BasePart") then
+				gate.CanCollide = false
+				gate.Transparency = 1
+			end
+			notify(player, "You're in. Lockers → hub → floor.")
+		end
+	end
+
+	local handlers = {
+		ShowID = function(player)
+			local s = st(player)
+			s.id = true
+			notify(player, "ID checked. Next: dress-code.")
+			tryOpenGate(player)
+		end,
+		DressCode = function(player)
+			local s = st(player)
+			s.dress = true
+			notify(player, "Dress code OK. All black. Proceed.")
+			tryOpenGate(player)
+		end,
+		Locker = function(player, part)
+			local s = st(player)
+			if not (s.id and s.dress) then
+				notify(player, "Clear ID + dress-code first.")
+				return
+			end
+			s.locker = true
+			local n = part and part:GetAttribute("LockerId") or "?"
+			notify(player, "Coat in locker " .. tostring(n) .. ". Locked.")
+		end,
+		Snack = function(player)
+			st(player).snack = true
+			notify(player, "Snack acquired. $0 tonight.")
+		end,
+		Drink = function(player)
+			st(player).drink = true
+			notify(player, "Drink in hand. Cheers.")
+		end,
+		Water = function(player)
+			st(player).water = true
+			notify(player, "Cold water. Hydrate.")
+		end,
+		Dance = function(player)
+			st(player).danced = true
+			notify(player, "You're on the floor.")
+			local char = player.Character
+			local hum = char and char:FindFirstChildOfClass("Humanoid")
+			if hum then
+				pcall(function()
+					hum.Jump = true
+				end)
+			end
+		end,
+		ToiletPaper = function(player)
+			st(player).tp = true
+			notify(player, "Paper grabbed.")
+		end,
+		Flush = function(player)
+			st(player).flushed = true
+			notify(player, "Flushed.")
+		end,
+		WashHands = function(player)
+			st(player).washed = true
+			notify(player, "Hands washed. Back to the floor.")
+		end,
+	}
+
+	local function onPrompt(prompt, player)
+		local part = prompt.Parent
+		if not part then
+			return
+		end
+		local kind = part:GetAttribute("Interact")
+		if not kind then
+			return
+		end
+		local fn = handlers[kind]
+		if fn then
+			fn(player, part)
+		end
+	end
+
+	local function wire(inst)
+		if inst:IsA("ProximityPrompt") then
+			inst.Triggered:Connect(function(player)
+				onPrompt(inst, player)
+			end)
+		end
+	end
+
+	for _, d in ipairs(root:GetDescendants()) do
+		wire(d)
+	end
+	root.DescendantAdded:Connect(wire)
+
+	Players.PlayerRemoving:Connect(function(player)
+		state[player.UserId] = nil
+	end)
+
+	log("Interactions live: ID → dress → lockers → snacks/drinks/water → dance → stalls.")
+end)
+
+----------------------------------------------------------------
+-- 12. LIGHT SHOW
 ----------------------------------------------------------------
 local palette = { C.red, C.magenta, C.violet, C.blue, C.red, C.white }
 

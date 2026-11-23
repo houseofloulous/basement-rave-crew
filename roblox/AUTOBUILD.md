@@ -12,3 +12,15 @@ Paste the full `BuildBasement.server.lua` into **ServerScriptService → Script*
 5. Walk courtyard → gate → club → **Stop** → **Publish**
 
 Builds `Workspace.BasementClub` (also clears old `BasementAuto`). Avatars later.
+
+## After paste — interactive flow
+
+Proximity prompts (E / tap) on the club path:
+
+1. **Show ID** at ID desk → **Dress-code check**
+2. Security gate opens → **Put coat & lock** at lockers
+3. Hub: **Get water**, **Buy snack**
+4. Main floor: **Buy drink** at bar, **Dance** on the floor
+5. The Stalls: **Take paper**, **Flush**, **Wash hands**
+
+One-shot rebuild: leave the Script in ServerScriptService; every Play rebuilds `Workspace.BasementClub`.

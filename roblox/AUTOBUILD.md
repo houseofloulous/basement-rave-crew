@@ -1,27 +1,17 @@
-# Auto-build Basement (≈2 minutes)
+# Auto-build Basement — v3 bright path (one paste)
 
-You do **not** place parts by hand. Focus: **club realism**. Avatars later.
+**One release.** Paste once, Play once. Over-lit + flat solid floor. Avatars later. Free Roblox only.
 
 ## Steps
 
-1. Open **Roblox Studio** → **New** → **Baseplate** (or open your existing Basement Rave Crew place)
-2. Explorer → **ServerScriptService** → **+** → **Script** (or replace the existing builder Script)
-3. Paste the full contents of **`BuildBasement.server.lua`**
-4. Open **View → Output** (bottom panel) so you can see `[BasementAuto]` lines
-5. Press **Play (▶)** once — wait while the club generates
-6. In **Explorer**, expand **Workspace** → you should see **BasementAuto**
-7. Press **Stop** → **File → Publish to Roblox**
+1. Roblox Studio → open **Basement Rave Crew** (or New → Baseplate)
+2. Explorer → **ServerScriptService** → Script (replace contents)
+3. Paste entire [`BuildBasement.server.lua`](https://raw.githubusercontent.com/houseofloulous/basement-rave-crew/main/roblox/BuildBasement.server.lua)
+4. **View → Output** → **Play ▶** → wait for `v3 BRIGHT PATH built`
+5. Walk the club → **Stop** → **Publish to Roblox**
 
-If there’s a floor hole before the entrance: re-paste **v2.3** (MouthBridge + extended asphalt/landing). Output: `Realism v2.3 built`.
+## Path
 
-**Where things are:** after security → **LOCKERS** → main → hall → **BATHROOMS**. Follow the glowing floor stripes.
+courtyard → gate → tunnel → security → **LOCKERS** → main/Charlotte → studio / dark rooms → **BATHROOMS** → Break Time
 
-## What you get (realism v2.3)
-
-- Street industrial gate (I-beams, roll-up, fence, corrugated metal)  
-- Courtyard queue + **KNOCKDOWN CENTER** brick facade  
-- Tall concrete ramp → black mouth → brick-arch red tunnel + amber grid  
-- Security, lockers, main/Charlotte (DJ, F1 stacks, orange grids, pipes)  
-- Studio, dark rooms, bright baths, Break Time backyard  
-
-Re-paste + Play anytime to rebuild. Map lives under `Workspace.BasementAuto`.
+Flat floor (no underground drop). No fog crush. Spine floods along the route.

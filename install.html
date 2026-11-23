@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Install Basement — Mac</title>
+  <title>Basement — Mac setup (GTA San Andreas)</title>
   <style>
     :root {
       --bg: #0a0809;
@@ -24,7 +24,7 @@
       line-height: 1.45;
     }
     main {
-      max-width: 40rem;
+      max-width: 42rem;
       margin: 0 auto;
       padding: 2.5rem 1.25rem 4rem;
     }
@@ -33,13 +33,13 @@
       font-family: "Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-size: clamp(1.35rem, 4vw, 1.9rem);
       margin: 0 0 0.5rem;
     }
     h2 {
       margin: 2rem 0 0.6rem;
-      font-size: 1rem;
-      letter-spacing: 0.14em;
+      font-size: 0.95rem;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       color: #fff;
     }
@@ -52,17 +52,18 @@
       margin-bottom: 1rem;
     }
     p { color: var(--muted); }
-    ol { padding-left: 1.2rem; color: var(--fg); }
-    li { margin: 0.75rem 0; }
+    ol, ul { padding-left: 1.2rem; color: var(--fg); }
+    li { margin: 0.7rem 0; }
     li strong { color: #fff; }
-    .note {
-      margin-top: 2rem;
+    .note, .status {
+      margin-top: 1.5rem;
       padding: 1rem 1.1rem;
       border: 1px solid var(--line);
       background: rgba(0,0,0,0.35);
       color: var(--muted);
       font-size: 0.95rem;
     }
+    .status { border-color: #5a2018; }
     .back {
       display: inline-block;
       margin-bottom: 1.5rem;
@@ -72,35 +73,57 @@
       text-transform: uppercase;
       font-size: 0.8rem;
     }
+    code {
+      font-size: 0.88em;
+      color: #ffd0c8;
+    }
   </style>
 </head>
 <body>
   <main>
     <a class="back" href="index.html">← Door</a>
-    <div class="tag">Mad Max Crew · Mac</div>
-    <h1>Install the real club</h1>
+    <div class="tag">Mad Max Crew · Always the realistic path</div>
+    <h1>Basement on Mac</h1>
     <p>
-      No Windows PC needed. The club that matches the reference reel is a
-      <strong style="color:#fff">GTA: San Andreas</strong> map — on Mac you run SA inside
-      <strong style="color:#fff">CrossOver</strong> (Whisky is flakier).
+      We’re building the club as a <strong style="color:#fff">GTA: San Andreas</strong> map —
+      same medium as the reference reel. On Mac that means SA inside
+      <strong style="color:#fff">CrossOver</strong> (no Windows PC).
     </p>
 
-    <h2>On your Mac</h2>
+    <div class="status">
+      <strong style="color:#fff">Pack status:</strong> scaffold on GitHub (<code>gta-sa-mod/</code>).
+      Your job now: get SA running on this Mac. Our job next: block out the courtyard in Ariane once that install exists.
+    </div>
+
+    <h2>1 · CrossOver</h2>
     <ol>
-      <li><strong>Install CrossOver</strong> (CodeWeavers). Trial is fine to try the game.</li>
-      <li><strong>Install Steam inside CrossOver</strong>, then buy/install <strong>GTA: San Andreas</strong>.</li>
-      <li><strong>Downgrade to SA v1.0</strong> + SilentPatch + ASI loader + <strong>ModLoader</strong> (same stack Mac gamers use for classic SA).</li>
-      <li>When our pack ships, drop <code>modloader/BasementRaveCrew/</code> into the game’s <code>modloader</code> folder and launch from Steam in CrossOver.</li>
+      <li>Install <a href="https://www.codeweavers.com/crossover" target="_blank" rel="noopener">CrossOver</a> (trial is fine to start).</li>
+      <li>Create a Windows bottle (Win10 is fine).</li>
+      <li>In that bottle, install <strong>Steam</strong>.</li>
     </ol>
 
-    <h2>Building the map</h2>
-    <p>
-      Map editing uses <a href="https://gtastuff.com/ariane/" target="_blank" rel="noopener">Ariane</a> against that same SA install.
-      Layout + crew roster live in <code>gta-sa-mod/</code> on GitHub while the pack is scaffold-only.
-    </p>
+    <h2>2 · GTA: San Andreas</h2>
+    <ol>
+      <li>In Steam (inside CrossOver), buy/install <strong>Grand Theft Auto: San Andreas</strong>.</li>
+      <li>Confirm it launches from Steam in the bottle.</li>
+      <li>We’ll downgrade/patch to the classic <strong>v1.0 + SilentPatch + ASI loader</strong> stack next (needed for mods). Full checklist: <a href="gta-sa-mod/MAC-SETUP.md">gta-sa-mod/MAC-SETUP.md</a>.</li>
+    </ol>
+
+    <h2>3 · ModLoader</h2>
+    <ol>
+      <li>Install Silent’s ASI loader + <strong>ModLoader</strong> into the SA folder.</li>
+      <li>When <code>BasementRaveCrew</code> ships, drop it in <code>modloader/BasementRaveCrew/</code> and launch.</li>
+    </ol>
+
+    <h2>4 · Building the map (crew)</h2>
+    <ol>
+      <li>Install <a href="https://gtastuff.com/ariane/" target="_blank" rel="noopener">Ariane</a> against that SA folder.</li>
+      <li>Follow <a href="gta-sa-mod/LAYOUT.md">LAYOUT.md</a> — courtyard → ramp → tunnel → security → floors.</li>
+      <li>Characters: <a href="gta-sa-mod/CHARACTERS.md">CHARACTERS.md</a>.</li>
+    </ol>
 
     <div class="note">
-      The browser walkthrough is a temporary prototype — use it to poke around until the Mac SA pack is playable.
+      Decision locked: always pick the more realistic option (GTA SA), never the crude browser sketch.
       Details: <a href="BUILD-PIVOT.md">BUILD-PIVOT.md</a>
     </div>
   </main>

@@ -1,15 +1,17 @@
 # Basement layout (Roblox target)
 
-Same one-level flow as the floorplan reel. **Built by** `BuildBasement.server.lua` (club realism pass; avatars deferred).
+Same one-level flow as the floorplan reel. **Built by** `BuildBasement.server.lua` (realism v2; avatars deferred).
 
-1. Street / courtyard — brick, asphalt, queue, VIP carpet, industrial gate  
-2. Ramp + tunnel — concrete, handrails, arch ribs, red ceiling wash  
-3. Security — ID + fashion check desks, aisle  
-4. Lockers — banks + center aisle + bench  
-5. Main Basement (Charlotte) — dance plate, DJ riser, F1-ish stacks, orange grid  
-6. Studio — booth + glass  
-7. Dark rooms — 2×2, near-black, low ember light  
-8. Bathrooms — bright ceramic tile, stalls, sinks  
-9. Break Time / backyard — gravel, picnic tables, string lights  
+1. Street gate — steel I-beam portal, roll-up, picket fence, corrugated panels, bollards  
+2. Courtyard — asphalt, VIP carpet/queue, Knockdown brick facade + sign, stack  
+3. Ramp — tall cast-concrete walls, pipe rails → black tunnel mouth  
+4. Tunnel — brick arches, mesh rails, wall speakers, red wash, amber grid  
+5. Security — ID / fashion desks + scanners  
+6. Lockers — banks, aisle, bench, hooks  
+7. Main / Charlotte — dance plate, DJ, F1 stacks, orange/amber grids, pipes, pillars  
+8. Studio — booth, glass, couch, monitors  
+9. Dark rooms — 2×2, recessed panels, ember light  
+10. Bathrooms — bright tile, stalls, mirrors, graffiti stripe  
+11. Break Time — gravel, picnic, barrels, string lights  
 
-Scale: ~1 stud ≈ 0.28 m; humanoid ~5 studs tall. Iterate shell via script, not hand-placing.
+Scale: ~1 stud ≈ 0.28 m. Iterate via script re-paste, not hand-placing.

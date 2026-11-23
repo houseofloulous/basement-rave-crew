@@ -1,24 +1,22 @@
 # Auto-build Basement (≈2 minutes)
 
-You do **not** place parts by hand. Focus right now: **club realism**. Avatars later.
+You do **not** place parts by hand. Focus: **club realism**. Avatars later.
 
 ## Steps
 
-1. Open **Roblox Studio** → **New** → **Baseplate**
-2. In **Explorer**, hover **ServerScriptService** → **+** → **Script**
-3. Open that Script, select all, delete, paste the full contents of  
-   **`BuildBasement.server.lua`**
-4. Press **Play (▶)** once — wait a few seconds while the club generates
+1. Open **Roblox Studio** → **New** → **Baseplate** (or open your existing Basement Rave Crew place)
+2. Explorer → **ServerScriptService** → **+** → **Script** (or replace the existing builder Script)
+3. Paste the full contents of **`BuildBasement.server.lua`**
+4. Press **Play (▶)** once — wait while the club generates
 5. Press **Stop**
-6. **File → Publish to Roblox** → name **Basement Rave Crew**
-7. (Optional) Delete the Script — the built map stays under `Workspace.BasementAuto`
+6. **File → Publish to Roblox**
 
-## What you get
+## What you get (realism v2)
 
-Courtyard (queue, carpet, industrial gate) → ramp + red tunnel → ID/fashion security → lockers → main / Charlotte (DJ, stacks, orange grid) → studio → dark rooms → bright bathrooms → Break Time backyard.
+- Street industrial gate (I-beams, roll-up, fence, corrugated metal)  
+- Courtyard queue + **KNOCKDOWN CENTER** brick facade  
+- Tall concrete ramp → black mouth → brick-arch red tunnel + amber grid  
+- Security, lockers, main/Charlotte (DJ, F1 stacks, orange grids, pipes)  
+- Studio, dark rooms, bright baths, Break Time backyard  
 
-Atmosphere: night haze, red color grade, bloom. Re-run anytime; it rebuilds clean.
-
-## Play with friends
-
-create.roblox.com → your place → permissions → friends can join. Share the place link.
+Re-paste + Play anytime to rebuild. Map lives under `Workspace.BasementAuto`.

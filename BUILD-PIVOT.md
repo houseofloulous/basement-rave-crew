@@ -25,12 +25,11 @@ Roblox won’t look identical to a GTA SA mod, but among **$0 Mac** options it�
 
 ## Focus now
 
-**Club shell realism first. Avatars / Mad Max outfits later.**
+**Club shell first (v3 bright path). Avatars later.** Over-lit + flat solid floor — no fog crush, no underground drop.
 
-The auto-builder (`roblox/BuildBasement.server.lua`) generates the full one-level flow: courtyard → gate → ramp/tunnel → security → lockers → main (Charlotte) → studio → dark rooms → bathrooms → Break Time backyard — with industrial materials, haze lighting, and signage. No avatar work until the rooms feel right.
+Paste once: `roblox/BuildBasement.server.lua` → Play (see `roblox/AUTOBUILD.md`).
 
 ## Next
 
-1. User: free Roblox Studio → paste `roblox/BuildBasement.server.lua` → Play once (see `roblox/AUTOBUILD.md`).  
-2. Walk the club; we iterate the **space** (materials, scale, lighting) via script updates.  
-3. Only after the shell feels real: outfits / avatars (still scripted).  
+1. User walks courtyard → tunnel → security → lockers → main → baths → Break Time.  
+2. Only after the shell is playable: outfits / avatars (still scripted).  

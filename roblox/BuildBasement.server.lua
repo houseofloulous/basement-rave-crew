@@ -1,17 +1,13 @@
 --[[
-  Basement Rave Crew — ONE-SHOT AUTO BUILD (realism v2.1)
-  =======================================================
+  Basement Rave Crew — ONE-SHOT AUTO BUILD (v3 bright path)
+  =========================================================
   Club shell only — avatars deferred.
+  Decisive rule: OVER-LIT + OVER-SOLID. No crushed fog indoors.
+  Flat continuous floor (no deep underground drop).
 
   Studio:
-  1. New → Baseplate  (or open Basement Rave Crew)
-  2. ServerScriptService → Script → paste THIS ENTIRE FILE
-  3. View → Output  (so you can see [BasementAuto] lines)
-  4. Play ▶ once → Stop → Publish
-
-  Re-run safe: wipes Workspace.BasementAuto + prior lighting FX.
-  If the world looks black: expand Workspace → BasementAuto should exist;
-  this pass keeps spawn courtyard lit so you can see immediately.
+  1. ServerScriptService → Script → paste THIS ENTIRE FILE
+  2. View → Output → Play ▶ once → Stop → Publish
 ]]
 
 local Workspace = game:GetService("Workspace")
@@ -115,46 +111,34 @@ local COL_ORANGE = Color3.fromRGB(255, 105, 28)
 local COL_AMBER = Color3.fromRGB(255, 160, 50)
 
 ----------------------------------------------------------------
--- LIGHTING / ATMOSPHERE
--- Keep club mood, but spawn/courtyard must stay readable (v2 was too black).
+-- LIGHTING — bright and readable (NO Atmosphere / NO fog crush)
 ----------------------------------------------------------------
-Lighting.Ambient = Color3.fromRGB(55, 42, 58)
-Lighting.OutdoorAmbient = Color3.fromRGB(70, 58, 75)
-Lighting.Brightness = 1.6
-Lighting.ClockTime = 20.5 -- evening, not pitch midnight
+Lighting.Ambient = Color3.fromRGB(140, 130, 145)
+Lighting.OutdoorAmbient = Color3.fromRGB(150, 140, 155)
+Lighting.Brightness = 2.5
+Lighting.ClockTime = 17.5
 Lighting.GeographicLatitude = 40
-Lighting.FogColor = Color3.fromRGB(28, 18, 32)
-Lighting.FogStart = 90
-Lighting.FogEnd = 320
-Lighting.GlobalShadows = true
-Lighting.EnvironmentDiffuseScale = 0.45
-Lighting.EnvironmentSpecularScale = 0.25
-
-local atmosphere = Instance.new("Atmosphere")
-atmosphere.Density = 0.22
-atmosphere.Offset = 0.2
-atmosphere.Color = Color3.fromRGB(70, 40, 55)
-atmosphere.Decay = Color3.fromRGB(30, 18, 28)
-atmosphere.Glare = 0.08
-atmosphere.Haze = 1.2
-atmosphere.Parent = Lighting
+Lighting.FogStart = 1e6
+Lighting.FogEnd = 1e6
+Lighting.GlobalShadows = false -- shadows were eating interior detail
+Lighting.EnvironmentDiffuseScale = 0.7
+Lighting.EnvironmentSpecularScale = 0.3
+-- Intentionally NO Atmosphere instance (was crushing interiors to black)
 
 local cc = Instance.new("ColorCorrectionEffect")
 cc.Name = "BasementCC"
-cc.TintColor = Color3.fromRGB(255, 210, 210)
-cc.Brightness = 0.02
-cc.Contrast = 0.1
-cc.Saturation = 0.06
+cc.TintColor = Color3.fromRGB(255, 230, 230)
+cc.Brightness = 0.08
+cc.Contrast = 0.05
+cc.Saturation = 0.05
 cc.Parent = Lighting
 
 local bloom = Instance.new("BloomEffect")
 bloom.Name = "BasementBloom"
-bloom.Intensity = 0.45
-bloom.Size = 24
-bloom.Threshold = 0.9
+bloom.Intensity = 0.25
+bloom.Size = 16
+bloom.Threshold = 1.1
 bloom.Parent = Lighting
-
--- No heavy DOF — it crushed visibility in Play
 
 ----------------------------------------------------------------
 -- ROOM SHELL HELPER
@@ -678,97 +662,54 @@ local rampFolder = Instance.new("Folder")
 rampFolder.Name = "RampTunnel"
 rampFolder.Parent = root
 
-local rampSteps = 16
-local rampDrop = 18
-local rampStartZ = 50 -- after MouthBridge apron so no hole at facade
-local rampLen = 48
+-- FLAT path (no underground drop — that was pitch-black + hard to light)
+local rampStartZ = 50
+local rampLen = 40
 local rampWidth = 16
+local tunnelY = 1 -- same level as courtyard
 
--- Flat landing inside mouth before the drop (walkable solid)
+-- Continuous solid corridor floor through ramp "descent" (visual walls only)
 part({
-	Name = "RampLanding",
-	Size = Vector3.new(rampWidth + 2, 1.5, 12),
-	Position = Vector3.new(0, 0.75, 46),
+	Name = "RampFloorSolid",
+	Size = Vector3.new(rampWidth + 2, 2, rampLen + 4),
+	Position = Vector3.new(0, 0.5, rampStartZ + rampLen / 2),
 	Color = COL_CONCRETE_PALE,
 	Material = Enum.Material.Concrete,
 	Parent = rampFolder,
 })
-
-for i = 0, rampSteps - 1 do
-	local t0 = i / rampSteps
-	local t1 = (i + 1) / rampSteps
-	local z0 = rampStartZ + t0 * rampLen
-	local z1 = rampStartZ + t1 * rampLen
-	local y0 = 1 - rampDrop * t0
-	local y1 = 1 - rampDrop * t1
-	local yMid = (y0 + y1) / 2
-	-- Extra thickness + Z overlap so steps never leave a fall-through seam
-	local thick = math.max(2.2, math.abs(y0 - y1) + 1.6)
-	part({
-		Name = "RampFloor" .. i,
-		Size = Vector3.new(rampWidth, thick, z1 - z0 + 0.8),
-		Position = Vector3.new(0, yMid, (z0 + z1) / 2),
-		Color = COL_CONCRETE_PALE,
-		Material = Enum.Material.Concrete,
-		Parent = rampFolder,
-	})
-	-- Tall cast walls (formwork bands)
-	local wallH = 14 + rampDrop * t1 * 0.25
+for i = 0, 12 do
+	local z = rampStartZ + i * (rampLen / 12)
 	for side = -1, 1, 2 do
 		part({
 			Name = "RampWall",
-			Size = Vector3.new(2.2, wallH, z1 - z0 + 0.3),
-			Position = Vector3.new(side * (rampWidth / 2 + 1), y1 + wallH / 2 - 1, (z0 + z1) / 2),
+			Size = Vector3.new(2.2, 14, rampLen / 12 + 0.4),
+			Position = Vector3.new(side * (rampWidth / 2 + 1), 8, z),
 			Color = COL_CONCRETE,
 			Material = Enum.Material.Concrete,
 			Parent = rampFolder,
 		})
-		-- formwork seam lines
-		part({
-			Name = "FormLine",
-			Size = Vector3.new(0.15, wallH * 0.9, 0.15),
-			Position = Vector3.new(side * (rampWidth / 2 + 0.1), y1 + wallH / 2 - 1, (z0 + z1) / 2),
-			Color = COL_CONCRETE_DARK,
-			Material = Enum.Material.Concrete,
-			CanCollide = false,
-			Parent = rampFolder,
-		})
-		-- pipe handrail (collide off — was snagging players)
 		part({
 			Name = "Rail",
-			Size = Vector3.new(0.28, 0.28, z1 - z0 + 0.2),
-			Position = Vector3.new(side * (rampWidth / 2 - 0.8), y1 + 3.6, (z0 + z1) / 2),
-			Color = COL_METAL,
-			Material = Enum.Material.Metal,
-			CanCollide = false,
-			Parent = rampFolder,
-		})
-		part({
-			Name = "RailPost",
-			Size = Vector3.new(0.25, 3.4, 0.25),
-			Position = Vector3.new(side * (rampWidth / 2 - 0.8), y1 + 2.2, (z0 + z1) / 2),
+			Size = Vector3.new(0.28, 0.28, rampLen / 12),
+			Position = Vector3.new(side * (rampWidth / 2 - 0.8), 4, z),
 			Color = COL_METAL,
 			Material = Enum.Material.Metal,
 			CanCollide = false,
 			Parent = rampFolder,
 		})
 	end
-	-- Path lights down the ramp (every other step)
-	if i % 2 == 0 then
-		local lamp = part({
-			Name = "RampLamp",
-			Size = Vector3.new(1.2, 0.4, 1.2),
-			Position = Vector3.new(0, y1 + 5.5, (z0 + z1) / 2),
-			Color = Color3.fromRGB(255, 190, 120),
-			Material = Enum.Material.Neon,
-			CanCollide = false,
-			Parent = rampFolder,
-		})
-		light(lamp, Color3.fromRGB(255, 200, 140), 3.5, 28)
-	end
+	local lamp = part({
+		Name = "RampLamp",
+		Size = Vector3.new(1.4, 0.5, 1.4),
+		Position = Vector3.new(0, 10, z),
+		Color = Color3.fromRGB(255, 220, 160),
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+		Parent = rampFolder,
+	})
+	light(lamp, Color3.fromRGB(255, 230, 180), 6, 40)
 end
 
-local tunnelY = 1 - rampDrop
 local tunnelZ0 = rampStartZ + rampLen
 local tunnelZ1 = tunnelZ0 + 42
 
@@ -920,30 +861,40 @@ for i = 0, 9 do
 			Parent = rampFolder,
 		})
 	end
+	-- Warm white flood (readable) + red accent
+	local flood = part({
+		Name = "TunnelFlood",
+		Size = Vector3.new(2, 0.5, 2),
+		Position = Vector3.new(0, tunnelY + 12.5, z),
+		Color = Color3.fromRGB(255, 240, 210),
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+		Parent = rampFolder,
+	})
+	light(flood, Color3.fromRGB(255, 235, 200), 8, 42)
 	local red = part({
 		Name = "TunnelRed",
-		Size = Vector3.new(3, 0.4, 3),
-		Position = Vector3.new(0, tunnelY + 13.2, z),
+		Size = Vector3.new(2, 0.35, 2),
+		Position = Vector3.new(0, tunnelY + 11.5, z),
 		Color = COL_RED,
 		Material = Enum.Material.Neon,
 		CanCollide = false,
 		Parent = rampFolder,
 	})
-	light(red, COL_RED, 5.5, 32)
-	-- Floor path glow so tunnel is never pitch black
-	local pathGlow = part({
-		Name = "TunnelPathGlow",
-		Size = Vector3.new(4, 0.15, 2),
-		Position = Vector3.new(0, tunnelY + 0.7, z),
-		Color = COL_RED,
-		Material = Enum.Material.Neon,
-		CanCollide = false,
-		Parent = rampFolder,
-	})
-	light(pathGlow, Color3.fromRGB(255, 80, 60), 2.2, 18)
+	light(red, COL_RED, 3, 20)
 end
 
--- Amber grid at tunnel end (pull toward club) — brighter
+-- Solid tunnel floor (extra thickness)
+part({
+	Name = "TunnelFloorSolid",
+	Size = Vector3.new(rampWidth + 2, 2, tunnelZ1 - tunnelZ0 + 4),
+	Position = Vector3.new(0, 0.5, (tunnelZ0 + tunnelZ1) / 2),
+	Color = COL_BRICK_DARK,
+	Material = Enum.Material.Brick,
+	Parent = rampFolder,
+})
+
+-- Amber grid at tunnel end
 for r = 0, 3 do
 	for c = 0, 5 do
 		local bulb = part({
@@ -955,50 +906,42 @@ for r = 0, 3 do
 			CanCollide = false,
 			Parent = rampFolder,
 		})
-		light(bulb, COL_AMBER, 2.2, 16)
+		light(bulb, COL_AMBER, 3.5, 20)
 	end
 end
 
--- Rise into club
-local riseSteps = 10
-local riseLen = 26
-for i = 0, riseSteps - 1 do
-	local t0 = i / riseSteps
-	local t1 = (i + 1) / riseSteps
-	local z0 = tunnelZ1 + t0 * riseLen
-	local z1 = tunnelZ1 + t1 * riseLen
-	local y0 = tunnelY + rampDrop * t0
-	local y1 = tunnelY + rampDrop * t1
+-- Flat connector to security (same Y — no rise)
+local riseLen = 20
+part({
+	Name = "RiseFloorSolid",
+	Size = Vector3.new(rampWidth + 2, 2, riseLen + 4),
+	Position = Vector3.new(0, 0.5, tunnelZ1 + riseLen / 2),
+	Color = COL_FLOOR,
+	Material = Enum.Material.Brick,
+	Parent = rampFolder,
+})
+for side = -1, 1, 2 do
 	part({
-		Name = "RiseFloor" .. i,
-		Size = Vector3.new(rampWidth, math.max(1.5, math.abs(y1 - y0) + 1), z1 - z0 + 0.3),
-		Position = Vector3.new(0, (y0 + y1) / 2, (z0 + z1) / 2),
-		Color = COL_FLOOR,
+		Name = "RiseWall",
+		Size = Vector3.new(2, 12, riseLen),
+		Position = Vector3.new(side * (rampWidth / 2 + 1), 7, tunnelZ1 + riseLen / 2),
+		Color = COL_BRICK_DARK,
 		Material = Enum.Material.Brick,
 		Parent = rampFolder,
 	})
-	for side = -1, 1, 2 do
-		part({
-			Name = "RiseWall",
-			Size = Vector3.new(2, 12, z1 - z0 + 0.3),
-			Position = Vector3.new(side * (rampWidth / 2 + 1), (y0 + y1) / 2 + 6, (z0 + z1) / 2),
-			Color = COL_BRICK_DARK,
-			Material = Enum.Material.Brick,
-			Parent = rampFolder,
-		})
-	end
-	if i % 2 == 0 then
-		local riseLamp = part({
-			Name = "RiseLamp",
-			Size = Vector3.new(1.2, 0.4, 1.2),
-			Position = Vector3.new(0, (y0 + y1) / 2 + 5, (z0 + z1) / 2),
-			Color = COL_AMBER,
-			Material = Enum.Material.Neon,
-			CanCollide = false,
-			Parent = rampFolder,
-		})
-		light(riseLamp, COL_AMBER, 3.2, 24)
-	end
+end
+for i = 0, 4 do
+	local z = tunnelZ1 + 2 + i * 4
+	local riseLamp = part({
+		Name = "RiseLamp",
+		Size = Vector3.new(1.4, 0.5, 1.4),
+		Position = Vector3.new(0, 10, z),
+		Color = Color3.fromRGB(255, 230, 180),
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+		Parent = rampFolder,
+	})
+	light(riseLamp, Color3.fromRGB(255, 230, 180), 7, 36)
 end
 
 local clubZ0 = tunnelZ1 + riseLen
@@ -1635,12 +1578,14 @@ spawn.Color = COL_RED
 spawn.Material = Enum.Material.Neon
 spawn.Parent = root
 
--- Flood lights so first frame is never pure black
+-- Courtyard beacons
 for _, offset in ipairs({
 	Vector3.new(0, 12, -20),
 	Vector3.new(-10, 10, -12),
 	Vector3.new(10, 10, -12),
 	Vector3.new(0, 8, 0),
+	Vector3.new(0, 10, 30),
+	Vector3.new(0, 10, 50),
 }) do
 	local beacon = part({
 		Name = "SpawnBeacon",
@@ -1651,10 +1596,9 @@ for _, offset in ipairs({
 		CanCollide = false,
 		Parent = root,
 	})
-	light(beacon, Color3.fromRGB(255, 210, 160), 5, 55)
+	light(beacon, Color3.fromRGB(255, 210, 160), 7, 60)
 end
 
--- Visible arrow toward gate / club (+Z)
 part({
 	Name = "SpawnArrow",
 	Size = Vector3.new(4, 0.4, 10),
@@ -1665,7 +1609,65 @@ part({
 	Parent = root,
 })
 
-print("[BasementAuto] Realism v2.3 built (avatars skipped). Floor hole at entrance filled.")
-print("[BasementAuto] Explorer → Workspace → BasementAuto → Lockers / Bathrooms / MainCharlotte …")
-print("[BasementAuto] Walk: courtyard → Knockdown mouth → ramp → tunnel → security → LOCKERS → main → hall → BATHROOMS")
-print("[BasementAuto] Stop Play, then Publish. Re-paste this script anytime to rebuild.")
+----------------------------------------------------------------
+-- SPINE: continuous solid floor + floods (over-solid / over-lit)
+----------------------------------------------------------------
+local spineZ0 = -40
+local spineZ1 = bathCenter.Z + 20
+part({
+	Name = "SpineFloor",
+	Size = Vector3.new(14, 2.5, spineZ1 - spineZ0),
+	Position = Vector3.new(0, 0.4, (spineZ0 + spineZ1) / 2),
+	Color = COL_ASPHALT,
+	Material = Enum.Material.Asphalt,
+	Parent = root,
+})
+part({
+	Name = "SpineBathBranch",
+	Size = Vector3.new(22, 2.5, 16),
+	Position = Vector3.new(mainCenter.X + 22, 0.4, mainCenter.Z + 36),
+	Color = COL_FLOOR,
+	Material = Enum.Material.Brick,
+	Parent = root,
+})
+part({
+	Name = "SpineMainBranch",
+	Size = Vector3.new(44, 2.5, 16),
+	Position = Vector3.new(mainCenter.X, 0.4, lockCenter.Z + 30),
+	Color = COL_FLOOR,
+	Material = Enum.Material.Brick,
+	Parent = root,
+})
+part({
+	Name = "SpineBreakBranch",
+	Size = Vector3.new(20, 2.5, 30),
+	Position = Vector3.new(yard2Center.X, 0.4, yard2Center.Z - 10),
+	Color = COL_GRAVEL,
+	Material = Enum.Material.Ground,
+	Parent = root,
+})
+
+for z = spineZ0, spineZ1, 12 do
+	local flood = part({
+		Name = "SpineFlood",
+		Size = Vector3.new(2, 2, 2),
+		Position = Vector3.new(0, 11, z),
+		Color = Color3.fromRGB(255, 245, 220),
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+		Parent = root,
+	})
+	light(flood, Color3.fromRGB(255, 245, 220), 9, 50)
+end
+
+-- Never leave invisible colliders
+for _, d in ipairs(root:GetDescendants()) do
+	if d:IsA("BasePart") and d.Transparency >= 0.9 then
+		d.CanCollide = false
+	end
+end
+
+print("[BasementAuto] v3 BRIGHT PATH built (avatars skipped). Flat floor, no fog crush.")
+print("[BasementAuto] Explorer → Workspace → BasementAuto")
+print("[BasementAuto] Walk: courtyard → gate → tunnel → security → LOCKERS → main → BATHROOMS → Break Time")
+print("[BasementAuto] Stop Play, then Publish.")

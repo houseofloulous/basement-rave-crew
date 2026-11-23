@@ -23,8 +23,14 @@ So the reel-accurate SA path is **paused** until there’s a free way to run it.
 
 Roblox won’t look identical to a GTA SA mod, but among **$0 Mac** options it’s the one that actually looks like a game with real people — not brown box avatars.
 
+## Focus now
+
+**Club shell realism first. Avatars / Mad Max outfits later.**
+
+The auto-builder (`roblox/BuildBasement.server.lua`) generates the full one-level flow: courtyard → gate → ramp/tunnel → security → lockers → main (Charlotte) → studio → dark rooms → bathrooms → Break Time backyard — with industrial materials, haze lighting, and signage. No avatar work until the rooms feel right.
+
 ## Next
 
 1. User: free Roblox Studio → paste `roblox/BuildBasement.server.lua` → Play once (see `roblox/AUTOBUILD.md`).  
-2. Publish place + share link with crew.  
-3. Later polish: textures, NPC crowd, Mad Max outfits — still scripted, not hand-built.  
+2. Walk the club; we iterate the **space** (materials, scale, lighting) via script updates.  
+3. Only after the shell feels real: outfits / avatars (still scripted).  

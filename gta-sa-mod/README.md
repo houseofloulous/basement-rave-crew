@@ -23,6 +23,10 @@ gta-sa-mod/
     BasementRaveCrew/       ← final drop-in pack
 ```
 
+## Mac first
+
+See **MAC-SETUP.md** (CrossOver + Steam SA). No Windows PC required.
+
 ## Install (players)
 
 1. Own GTA San Andreas (PC).  
@@ -40,9 +44,9 @@ gta-sa-mod/
 
 ## Status
 
-- [x] Pivot decided (leave Three.js prototype)  
-- [ ] LAYOUT.md from floorplan reel  
-- [ ] Texture crop list from `textures-real/`  
+- [x] Pivot locked — always GTA SA / CrossOver on Mac (never browser sketch)
+- [x] Mac setup checklist (`MAC-SETUP.md`)  
+- [ ] User: SA launching in CrossOver  
 - [ ] Ariane courtyard blocked out  
 - [ ] Ped roster assigned  
 - [ ] ModLoader pack playable end-to-end  

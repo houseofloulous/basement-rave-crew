@@ -1,18 +1,23 @@
 --[[
-  Basement Rave Crew — ONE-SHOT AUTO BUILD (realism v2)
-  =====================================================
+  Basement Rave Crew — ONE-SHOT AUTO BUILD (realism v2.1)
+  =======================================================
   Club shell only — avatars deferred.
 
   Studio:
-  1. New → Baseplate  (or re-paste into existing Script)
+  1. New → Baseplate  (or open Basement Rave Crew)
   2. ServerScriptService → Script → paste THIS ENTIRE FILE
-  3. Play ▶ once → Stop → Publish
+  3. View → Output  (so you can see [BasementAuto] lines)
+  4. Play ▶ once → Stop → Publish
 
   Re-run safe: wipes Workspace.BasementAuto + prior lighting FX.
+  If the world looks black: expand Workspace → BasementAuto should exist;
+  this pass keeps spawn courtyard lit so you can see immediately.
 ]]
 
 local Workspace = game:GetService("Workspace")
 local Lighting = game:GetService("Lighting")
+
+print("[BasementAuto] Building club shell…")
 
 local ROOT_NAME = "BasementAuto"
 
@@ -111,50 +116,45 @@ local COL_AMBER = Color3.fromRGB(255, 160, 50)
 
 ----------------------------------------------------------------
 -- LIGHTING / ATMOSPHERE
+-- Keep club mood, but spawn/courtyard must stay readable (v2 was too black).
 ----------------------------------------------------------------
-Lighting.Ambient = Color3.fromRGB(18, 10, 20)
-Lighting.OutdoorAmbient = Color3.fromRGB(24, 18, 32)
-Lighting.Brightness = 0.7
-Lighting.ClockTime = 0.4
+Lighting.Ambient = Color3.fromRGB(55, 42, 58)
+Lighting.OutdoorAmbient = Color3.fromRGB(70, 58, 75)
+Lighting.Brightness = 1.6
+Lighting.ClockTime = 20.5 -- evening, not pitch midnight
 Lighting.GeographicLatitude = 40
-Lighting.FogColor = Color3.fromRGB(8, 4, 12)
-Lighting.FogStart = 22
-Lighting.FogEnd = 140
+Lighting.FogColor = Color3.fromRGB(28, 18, 32)
+Lighting.FogStart = 90
+Lighting.FogEnd = 320
 Lighting.GlobalShadows = true
-Lighting.EnvironmentDiffuseScale = 0.28
-Lighting.EnvironmentSpecularScale = 0.15
+Lighting.EnvironmentDiffuseScale = 0.45
+Lighting.EnvironmentSpecularScale = 0.25
 
 local atmosphere = Instance.new("Atmosphere")
-atmosphere.Density = 0.42
-atmosphere.Offset = 0.12
-atmosphere.Color = Color3.fromRGB(60, 22, 35)
-atmosphere.Decay = Color3.fromRGB(14, 5, 10)
-atmosphere.Glare = 0.12
-atmosphere.Haze = 2.8
+atmosphere.Density = 0.22
+atmosphere.Offset = 0.2
+atmosphere.Color = Color3.fromRGB(70, 40, 55)
+atmosphere.Decay = Color3.fromRGB(30, 18, 28)
+atmosphere.Glare = 0.08
+atmosphere.Haze = 1.2
 atmosphere.Parent = Lighting
 
 local cc = Instance.new("ColorCorrectionEffect")
 cc.Name = "BasementCC"
-cc.TintColor = Color3.fromRGB(255, 195, 195)
-cc.Brightness = -0.06
-cc.Contrast = 0.16
-cc.Saturation = 0.1
+cc.TintColor = Color3.fromRGB(255, 210, 210)
+cc.Brightness = 0.02
+cc.Contrast = 0.1
+cc.Saturation = 0.06
 cc.Parent = Lighting
 
 local bloom = Instance.new("BloomEffect")
 bloom.Name = "BasementBloom"
-bloom.Intensity = 0.7
-bloom.Size = 32
-bloom.Threshold = 0.78
+bloom.Intensity = 0.45
+bloom.Size = 24
+bloom.Threshold = 0.9
 bloom.Parent = Lighting
 
-local dof = Instance.new("DepthOfFieldEffect")
-dof.Name = "BasementDOF"
-dof.FarIntensity = 0.22
-dof.NearIntensity = 0.04
-dof.FocusDistance = 24
-dof.InFocusRadius = 18
-dof.Parent = Lighting
+-- No heavy DOF — it crushed visibility in Play
 
 ----------------------------------------------------------------
 -- ROOM SHELL HELPER
@@ -512,19 +512,32 @@ for i = 0, 9 do
 	part({ Name = "RopeR", Size = Vector3.new(0.12, 0.12, 5), Position = Vector3.new(6, 3.9, z + 2.5), Color = COL_RED, Material = Enum.Material.Fabric, CanCollide = false, Parent = yard })
 end
 
--- Sodium yard lights
-for _, x in ipairs({ -24, 24 }) do
-	part({ Name = "Pole", Size = Vector3.new(0.5, 15, 0.5), Position = Vector3.new(x, 8, -25), Color = COL_METAL, Material = Enum.Material.Metal, Parent = yard })
+-- Sodium yard lights (bright enough to read courtyard in Play)
+for _, pos in ipairs({
+	Vector3.new(-24, 16, -25),
+	Vector3.new(24, 16, -25),
+	Vector3.new(-20, 14, -5),
+	Vector3.new(20, 14, -5),
+	Vector3.new(0, 14, 20),
+}) do
+	part({
+		Name = "Pole",
+		Size = Vector3.new(0.5, pos.Y - 1, 0.5),
+		Position = Vector3.new(pos.X, pos.Y / 2, pos.Z),
+		Color = COL_METAL,
+		Material = Enum.Material.Metal,
+		Parent = yard,
+	})
 	local bulb = part({
 		Name = "Sodium",
-		Size = Vector3.new(1.5, 1.5, 1.5),
-		Position = Vector3.new(x, 16, -25),
+		Size = Vector3.new(1.6, 1.6, 1.6),
+		Position = pos,
 		Color = COL_AMBER,
 		Material = Enum.Material.Neon,
 		CanCollide = false,
 		Parent = yard,
 	})
-	light(bulb, COL_AMBER, 3.5, 60)
+	light(bulb, COL_AMBER, 4.5, 70)
 end
 
 -- Dumpster / clutter
@@ -1217,9 +1230,9 @@ local baths = roomShell({
 	Size = Vector3.new(44, 14, 30),
 	DoorGaps = { S = 10 },
 	FloorColor = COL_TILE,
-	FloorMaterial = Enum.Material.CeramicTiles,
+	FloorMaterial = Enum.Material.SmoothPlastic,
 	WallColor = COL_TILE,
-	WallMaterial = Enum.Material.CeramicTiles,
+	WallMaterial = Enum.Material.SmoothPlastic,
 	CeilColor = COL_WHITE,
 	Pipes = false,
 })
@@ -1305,23 +1318,26 @@ local hallRed = part({ Name = "HallRed", Size = Vector3.new(1, 1, 1), Position =
 light(hallRed, COL_RED, 2, 20)
 
 ----------------------------------------------------------------
--- SPAWN
+-- SPAWN (lit courtyard pad — facing gate / club)
 ----------------------------------------------------------------
 for _, child in ipairs(Workspace:GetChildren()) do
 	if child:IsA("SpawnLocation") then
 		child:Destroy()
 	end
 end
+-- Keep a faint ground under spawn so Play never drops into void if something fails
 local bp = Workspace:FindFirstChild("Baseplate")
 if bp and bp:IsA("BasePart") then
-	bp.Transparency = 1
-	bp.CanCollide = false
+	bp.Color = COL_ASPHALT
+	bp.Material = Enum.Material.Asphalt
+	bp.Transparency = 0.35
+	bp.CanCollide = true
 end
 
 local spawn = Instance.new("SpawnLocation")
 spawn.Name = "BasementSpawn"
-spawn.Size = Vector3.new(8, 1, 8)
-spawn.Position = Vector3.new(0, 1.5, -35)
+spawn.Size = Vector3.new(10, 1, 10)
+spawn.Position = Vector3.new(0, 1.5, -20)
 spawn.Anchored = true
 spawn.Duration = 0
 spawn.Neutral = true
@@ -1329,6 +1345,37 @@ spawn.Color = COL_RED
 spawn.Material = Enum.Material.Neon
 spawn.Parent = root
 
-print("[BasementAuto] Realism v2 built (avatars skipped).")
-print("[BasementAuto] Path: street gate → courtyard → Knockdown facade → ramp → brick tunnel → security → lockers → main → studio / dark / baths → break time.")
+-- Flood lights so first frame is never pure black
+for _, offset in ipairs({
+	Vector3.new(0, 12, -20),
+	Vector3.new(-10, 10, -12),
+	Vector3.new(10, 10, -12),
+	Vector3.new(0, 8, 0),
+}) do
+	local beacon = part({
+		Name = "SpawnBeacon",
+		Size = Vector3.new(1.5, 1.5, 1.5),
+		Position = offset,
+		Color = Color3.fromRGB(255, 200, 140),
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+		Parent = root,
+	})
+	light(beacon, Color3.fromRGB(255, 210, 160), 5, 55)
+end
+
+-- Visible arrow toward gate / club (+Z)
+part({
+	Name = "SpawnArrow",
+	Size = Vector3.new(4, 0.4, 10),
+	Position = Vector3.new(0, 1.3, -8),
+	Color = COL_RED,
+	Material = Enum.Material.Neon,
+	CanCollide = false,
+	Parent = root,
+})
+
+print("[BasementAuto] Realism v2.1 built (avatars skipped). Spawn courtyard is lit.")
+print("[BasementAuto] Look in Explorer → Workspace → BasementAuto")
+print("[BasementAuto] Path: street gate → courtyard → Knockdown → ramp → tunnel → security → lockers → main → …")
 print("[BasementAuto] Stop Play, then Publish. Re-paste this script anytime to rebuild.")

@@ -25,5 +25,6 @@ Roblox won’t look identical to a GTA SA mod, but among **$0 Mac** options it�
 
 ## Next
 
-1. User: free Roblox account + Roblox Studio on Mac (see `roblox/MAC-SETUP.md`).  
-2. Us: place layout (courtyard → ramp → tunnel → floors) + Mad Max crew outfits from your photo refs.  
+1. User: free Roblox Studio → paste `roblox/BuildBasement.server.lua` → Play once (see `roblox/AUTOBUILD.md`).  
+2. Publish place + share link with crew.  
+3. Later polish: textures, NPC crowd, Mad Max outfits — still scripted, not hand-built.  

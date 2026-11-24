@@ -9,19 +9,27 @@ Paste the full `BuildBasement.server.lua` into **ServerScriptService → Script*
 2. Explorer → **ServerScriptService** → **+** → **Script** (or replace existing)
 3. Paste entire file from:  
    https://raw.githubusercontent.com/houseofloulous/basement-rave-crew/main/roblox/BuildBasement.server.lua
-4. **Play ▶** once — wait for `[Basement] Club built…`
+4. **Play ▶** once — wait for `[Basement] Club built…` (and `DJ music: Berlin In Space…`)
 5. Walk courtyard → gate → club → **Stop** → **Publish**
 
-## Interactive flow (ProximityPrompt — press **E** / tap)
+## DJ music (free stand-in)
 
-1. Courtyard line: optional **Play as Sam / Mike / Max / Chris** (still all black + harness)
-2. **Show ID** (bouncer + guest pass flash) → **Dress-code check**
-3. Gate opens → **Put bag & coat · lock** (bag/coat appear in front of locker, LOCKED)
-4. Hub: **Get water**, **Buy snack**
-5. Main: hear **DJ music** (loud on dancefloor) · **Buy drink** · stand on neon pad → **Press E to dance**
-6. Each completed stop plays a club **pew-pew** zap + toast
-7. The Stalls: **Take paper**, **Flush**, **Wash hands**
+| | |
+|---|---|
+| **ID** | `rbxassetid://1838490526` |
+| **Name** | Berlin In Space (APM / Creator Store) |
+| **Genre** | Techno |
+| **Why** | Free dark warehouse techno pulse — closest free stand-in for Charlotte de Witte / deep hard techno. **Not** Upbeat Electronica. |
+| **Mix** | Loud at Charlotte booth + dancefloor; quieter SoundService bed elsewhere; Looped + Playing |
 
-Free assets only: DJ `rbxassetid://1837849285` (Creator docs Upbeat Electronica), engine SFX, free Black Jeans pants `382537569`, default dance anims.
+True Charlotte tracks need rights/upload — this is the decisive free option.
 
-Optional client tip script: `BasementClient.local.lua` → StarterPlayerScripts (not required).
+## Interactive flow (press **E** / tap)
+
+1. Courtyard: optional **Play as Sam / Mike / Max / Chris**
+2. **Show ID** → **Dress-code check** → gate opens
+3. **Put bag & coat · lock**
+4. **Get water** / **Buy snack** / **Buy drink**
+5. Neon pad → **Press E to dance** (hear techno)
+6. Pew-pew on each completed stop
+7. Stalls: **Take paper** / **Flush** / **Wash hands**

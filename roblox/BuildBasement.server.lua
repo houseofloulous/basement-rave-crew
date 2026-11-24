@@ -15,8 +15,9 @@
 
   Interactions (ProximityPrompts, server-only): show ID → dress-code →
   lockers (bag + coat) → snacks/drinks/water → dance → toilet paper / flush / wash.
-  Free audio: Roblox Creator tutorial IDs + built-in engine SFX.
-  Avatar: all-black BodyColors + harness on spawn.
+  Free audio: APM "Berlin In Space" techno (1838490526) — dark warehouse
+  stand-in for Charlotte / hard techno (NOT upbeat tutorial electronica).
+  Avatar: all-black BodyColors + harness on spawn; Sam/Mike/Max/Chris picker.
 
   Safe to re-run: it deletes its previous build first.
 ]]
@@ -320,8 +321,11 @@ local function notify(player, text)
 end
 
 -- Free Roblox audio + built-in SFX (no paid assets)
--- DJ: Creator Hub sample "Upbeat Electronica" — free tutorial ID (audible indoors at high volume)
-local DJ_MUSIC_ID = "rbxassetid://1837849285"
+-- DJ bed: APM "Berlin In Space" (Techno) — free Creator Store stand-in for
+-- Charlotte de Witte / deep dark hard techno warehouse pulse. NOT upbeat tutorial electronica.
+-- Asset: rbxassetid://1838490526 — name: Berlin In Space — genre: Techno
+local DJ_MUSIC_ID = "rbxassetid://1838490526"
+local DJ_MUSIC_NAME = "Berlin In Space (APM Techno — free CdW stand-in)"
 local PEW_SFX = "rbxasset://sounds/electronicpingshort.wav"
 local PEW_CLICK = "rbxasset://sounds/switch.wav"
 local DANCE_ANIM_IDS = {
@@ -717,10 +721,10 @@ local function setupDjMusic(parentPart, dancePart)
 	sound.Name = "DJMusic"
 	sound.SoundId = DJ_MUSIC_ID
 	sound.Looped = true
-	sound.Volume = 0.95
+	sound.Volume = 1.05
 	sound.RollOffMode = Enum.RollOffMode.InverseTapered
-	sound.RollOffMinDistance = 18
-	sound.RollOffMaxDistance = 140
+	sound.RollOffMinDistance = 20
+	sound.RollOffMaxDistance = 150
 	sound.Playing = true
 	sound.Parent = parentPart
 	if dancePart then
@@ -728,10 +732,10 @@ local function setupDjMusic(parentPart, dancePart)
 		floor.Name = "DancefloorMusic"
 		floor.SoundId = DJ_MUSIC_ID
 		floor.Looped = true
-		floor.Volume = 1.0
+		floor.Volume = 1.15
 		floor.RollOffMode = Enum.RollOffMode.InverseTapered
-		floor.RollOffMinDistance = 22
-		floor.RollOffMaxDistance = 70
+		floor.RollOffMinDistance = 24
+		floor.RollOffMaxDistance = 80
 		floor.Playing = true
 		floor.Parent = dancePart
 	end
@@ -743,10 +747,9 @@ local function setupDjMusic(parentPart, dancePart)
 	bed.Name = "BasementMusicBed"
 	bed.SoundId = DJ_MUSIC_ID
 	bed.Looped = true
-	bed.Volume = 0.28
+	bed.Volume = 0.22 -- quieter elsewhere; booth/floor carry the hit
 	bed.Playing = true
 	bed.Parent = SoundService
-	-- ensure play after replicate
 	task.defer(function()
 		sound.Looped = true
 		sound:Play()
@@ -754,8 +757,38 @@ local function setupDjMusic(parentPart, dancePart)
 			bed.Looped = true
 			bed:Play()
 		end
+		if dancePart then
+			local fl = dancePart:FindFirstChild("DancefloorMusic")
+			if fl then
+				fl.Looped = true
+				fl:Play()
+			end
+		end
 	end)
+	log("DJ music: " .. DJ_MUSIC_NAME)
 	return sound
+end
+
+-- Industrial density helpers (Berghain-in-GTA / Basement Brooklyn read)
+local function cableTray(name, x0, x1, y, z0, z1, parent)
+	box(name, x0, x1, y, y + 0.35, z0, z1, C.metal, M.DiamondPlate, { collide = false, parent = parent })
+	box(name .. "Cables", x0 + 0.2, x1 - 0.2, y - 0.25, y, z0 + 0.15, z1 - 0.15, C.black, M.Rubber, { collide = false, parent = parent })
+end
+
+local function f1Stack(name, x0, x1, z0, z1, parent)
+	-- Funktion-One-ish stacked PA silhouette
+	box(name .. "Base", x0, x1, FLOOR, FLOOR + 2.2, z0, z1, C.black, M.SmoothPlastic, { parent = parent })
+	box(name .. "Mid", x0 + 0.3, x1 - 0.3, FLOOR + 2.2, FLOOR + 6.5, z0 + 0.2, z1 - 0.2, C.nearBlack, M.SmoothPlastic, { parent = parent })
+	box(name .. "Top", x0 + 0.5, x1 - 0.5, FLOOR + 6.5, FLOOR + 11.5, z0 + 0.35, z1 - 0.35, C.black, M.SmoothPlastic, { parent = parent })
+	for k = 0, 2 do
+		local y = FLOOR + 2.6 + k * 2.8
+		box(name .. "Horn", x0 + 0.5, x1 - 0.5, y, y + 2.2, z0 - 0.05, z0 + 0.15, C.orange, M.Neon, {
+			collide = false,
+			transparency = 0.35,
+			parent = parent,
+		})
+	end
+	neon(name .. "Glow", x0 + 0.8, x1 - 0.8, FLOOR + 10.8, FLOOR + 11.2, z0 - 0.1, z0, C.orange, parent)
 end
 
 local function setupAvatars()
@@ -1102,12 +1135,13 @@ section("Building shell", function()
 	local f = folder("3 Shell")
 	box("ClubSlab", -60, 90, 0, FLOOR - 0.1, 0, 100, C.concreteDark, M.Concrete, { parent = f })
 	box("FloorEntry", -60, -30, 0.4, FLOOR, 0, 45, C.concrete, M.Concrete, { parent = f })
-	box("FloorHub", -30, 15, 0.4, FLOOR, 0, 45, C.concreteDark, M.Concrete, { parent = f })
-	box("FloorStudio", 15, 60, 0.4, FLOOR, 0, 45, Color3.fromRGB(58, 56, 56), M.Concrete, { parent = f })
-	box("FloorStalls", 60, 90, 0.4, FLOOR, 0, 45, C.tile, M.SmoothPlastic, { parent = f })
-	box("FloorMain", -60, 0, 0.4, FLOOR, 45, 100, Color3.fromRGB(70, 40, 34), M.Brick, { parent = f })
+	box("FloorHub", -30, 15, 0.4, FLOOR, 0, 45, Color3.fromRGB(42, 40, 44), M.DiamondPlate, { parent = f })
+	box("FloorStudio", 15, 60, 0.4, FLOOR, 0, 45, Color3.fromRGB(52, 50, 54), M.Concrete, { parent = f })
+	box("FloorStalls", 60, 90, 0.4, FLOOR, 0, 45, Color3.fromRGB(200, 205, 210), M.Marble, { parent = f }) -- wet tile read
+	box("FloorMain", -60, 0, 0.4, FLOOR, 45, 100, Color3.fromRGB(48, 36, 34), M.Concrete, { parent = f })
+	box("FloorMainRubber", -42, -18, FLOOR - 0.02, FLOOR + 0.04, 56, 80, Color3.fromRGB(22, 18, 20), M.Rubber, { parent = f })
 	box("FloorDark", 0, 35, 0.4, FLOOR, 45, 100, C.black, M.Slate, { parent = f })
-	box("FloorYard", 35, 90, 0.4, FLOOR, 45, 100, C.gravel, M.Pebble, { parent = f })
+	box("FloorYard", 35, 90, 0.4, FLOOR, 45, 100, C.gravel, M.Ground, { parent = f })
 
 	wallX("OuterS", 0, -61, -30, { { -53, -39 } }, { color = C.concrete, material = M.Concrete, parent = f })
 	wallX("OuterS", 0, -30, 15, {}, { color = C.brickDark, material = M.Brick, parent = f })
@@ -1133,25 +1167,35 @@ section("Building shell", function()
 	ceiling("CeilMain", -60, 0, 45, 100, CEIL)
 	ceiling("CeilDark", 0, 35, 45, 100, DOOR_TOP)
 
-	for _, z in ipairs({ 8, 22, 36 }) do
+	for _, z in ipairs({ 8, 16, 22, 30, 36 }) do
 		box("Pipe", -59, 59, CEIL - 1.6, CEIL - 0.8, z - 0.4, z + 0.4, C.rust, M.CorrodedMetal, {
-			shape = Enum.PartType.Cylinder,
 			collide = false,
 			parent = f,
 		})
 	end
-	for _, z in ipairs({ 58, 72, 86 }) do
+	for _, z in ipairs({ 52, 58, 66, 72, 80, 86, 94 }) do
 		box("Pipe", -59, -1, CEIL - 1.6, CEIL - 0.8, z - 0.4, z + 0.4, C.rust, M.CorrodedMetal, {
-			shape = Enum.PartType.Cylinder,
 			collide = false,
 			parent = f,
 		})
 	end
-	for _, x in ipairs({ -45, -15, 30, 50 }) do
-		box("IBeam", x - 0.5, x + 0.5, CEIL - 1.2, CEIL, 1, 44, C.metal, M.Metal, { collide = false, parent = f })
+	for _, x in ipairs({ -50, -35, -20, -5, 20, 40, 55, 75 }) do
+		box("IBeam", x - 0.55, x + 0.55, CEIL - 1.35, CEIL, 1, 44, C.metal, M.Metal, { collide = false, parent = f })
 	end
-	for _, x in ipairs({ -45, -30, -15 }) do
-		box("IBeam", x - 0.5, x + 0.5, CEIL - 1.2, CEIL, 46, 99, C.metal, M.Metal, { collide = false, parent = f })
+	for _, x in ipairs({ -50, -35, -20, -5 }) do
+		box("IBeam", x - 0.55, x + 0.55, CEIL - 1.35, CEIL, 46, 99, C.metal, M.Metal, { collide = false, parent = f })
+	end
+	-- cable trays along corridors
+	cableTray("TrayHub", -28, 13, CEIL - 2.4, 18, 20, f)
+	cableTray("TrayMain", -55, -5, CEIL - 2.5, 54, 56, f)
+	cableTray("TrayMain2", -55, -5, CEIL - 2.5, 78, 80, f)
+	cableTray("TrayStudio", 18, 55, CEIL - 2.4, 12, 14, f)
+	-- vertical conduit clusters (less empty wall)
+	for _, xz in ipairs({ { -58, 20 }, { -32, 8 }, { 12, 30 }, { 58, 20 }, { -55, 70 }, { -8, 90 } }) do
+		box("Conduit", xz[1] - 0.2, xz[1] + 0.2, FLOOR + 4, CEIL - 1.5, xz[2] - 0.2, xz[2] + 0.2, C.metal, M.Metal, {
+			collide = false,
+			parent = f,
+		})
 	end
 
 	panel("Exit", -20, -16, DOOR_TOP + 0.5, DOOR_TOP + 2, 46.05, 46.3, Enum.NormalId.Back, "EXIT", C.green, C.black, "GothamBlack", f)
@@ -1218,7 +1262,7 @@ section("Entry", function()
 	box("Bench", -50, -40, FLOOR, FLOOR + 1.6, 30, 32, C.wood, M.WoodPlanks, { parent = f })
 	lamp("LockerLight", -45, CEIL - 2, 34, C.amber, 1.3, 30, f)
 
-	-- Clickable locker doors (bag + coat + lock) — props spawn in aisle in front of door
+	-- Clickable locker doors with readable door grid (vents + numbers + handles)
 	for i = 0, 5 do
 		local z0 = 22 + i * 3.5
 		local door = box("LockerDoor", -56.9, -56.55, FLOOR + 1.5, FLOOR + 7.5, z0, z0 + 2.8, C.steel, M.Metal, { parent = f })
@@ -1226,6 +1270,19 @@ section("Entry", function()
 		door:SetAttribute("LockerId", i + 1)
 		door:SetAttribute("LockerZ", z0)
 		makePrompt(door, "Put bag & coat · lock", "Locker " .. (i + 1), 1.0, 8)
+		-- vent slots
+		for row = 0, 3 do
+			local y = FLOOR + 2.2 + row * 1.2
+			box("LockerVent", -56.52, -56.48, y, y + 0.08, z0 + 0.35, z0 + 2.45, C.nearBlack, M.Metal, {
+				collide = false,
+				parent = f,
+			})
+		end
+		box("LockerHandle", -56.5, -56.35, FLOOR + 4.2, FLOOR + 4.7, z0 + 2.2, z0 + 2.55, C.black, M.Metal, {
+			collide = false,
+			parent = f,
+		})
+		panel("LockerNum", -56.52, -56.48, FLOOR + 6.6, FLOOR + 7.2, z0 + 0.6, z0 + 1.6, Enum.NormalId.Right, tostring(i + 1), C.white, C.nearBlack, "GothamBlack", f)
 	end
 end)
 
@@ -1238,6 +1295,7 @@ section("Hub", function()
 		box("Column", x - 1.5, x + 1.5, FLOOR, CEIL, 20.5, 23.5, C.concrete, M.Concrete, { parent = f })
 	end
 	box("WaterTrough", -24, -14, FLOOR, FLOOR + 3.4, 1, 3.4, C.steel, M.Metal, { parent = f })
+	box("WaterTroughFace", -24, -14, FLOOR, FLOOR + 3.4, 3.25, 3.45, C.metal, M.DiamondPlate, { parent = f })
 	box("WaterBasin", -23.5, -14.5, FLOOR + 3.1, FLOOR + 3.45, 1.4, 3, C.nearBlack, M.Metal, { collide = false, parent = f })
 	for _, x in ipairs({ -22, -19, -16 }) do
 		local tap = box("Tap", x - 0.2, x + 0.2, FLOOR + 3.4, FLOOR + 5.2, 1.2, 1.6, C.steel, M.Metal, { collide = false, parent = f })
@@ -1281,49 +1339,59 @@ end)
 ----------------------------------------------------------------
 section("Main floor", function()
 	local f = folder("6 Basement Main Floor")
-	box("DJRiser", -40, -20, FLOOR, FLOOR + 3, 89, 99, C.concreteDark, M.Concrete, { parent = f })
-	local djDesk = box("DJDesk", -36, -24, FLOOR + 3, FLOOR + 6.5, 91, 93.5, C.black, M.SmoothPlastic, { parent = f })
-	-- dancePart wired after dance pad is created below; temporary nil then re-call not needed — pass via late attach
+	-- Charlotte booth: stepped riser, diamond-plate edge, clear desk + decks
+	box("DJRiser", -42, -18, FLOOR, FLOOR + 2.4, 88, 99, C.concreteDark, M.Concrete, { parent = f })
+	box("DJRiserLip", -42.2, -17.8, FLOOR + 2.4, FLOOR + 2.7, 87.7, 88.2, C.metal, M.DiamondPlate, { parent = f })
+	box("DJRail", -41.5, -18.5, FLOOR + 2.7, FLOOR + 4.0, 88.0, 88.25, C.steel, M.Metal, { collide = false, parent = f })
+	local djDesk = box("DJDesk", -36, -24, FLOOR + 2.7, FLOOR + 5.8, 91.2, 94.2, C.black, M.SmoothPlastic, { parent = f })
+	box("DJDeskTop", -36.3, -23.7, FLOOR + 5.8, FLOOR + 6.05, 91.0, 94.4, C.metal, M.DiamondPlate, { parent = f })
 	local djMusicPending = djDesk
-	for i, x in ipairs({ -35, -31.4, -27.6 }) do
-		local w = (i == 2) and 2.4 or 3.4
-		box("Deck", x, x + w, FLOOR + 6.5, FLOOR + 6.9, 91.4, 93.1, C.metal, M.Metal, { collide = false, parent = f })
-		neon("DeckScreen", x + 0.3, x + w - 0.3, FLOOR + 6.9, FLOOR + 7.0, 91.8, 92.5, (i == 2) and C.orange or C.ice, f)
+	-- CDJ / mixer silhouette row
+	for i, x in ipairs({ -35.2, -32.4, -29.6, -26.8 }) do
+		local w = (i == 3) and 2.2 or 2.4
+		box("Deck", x, x + w, FLOOR + 6.05, FLOOR + 6.55, 91.6, 93.6, C.nearBlack, M.Metal, { collide = false, parent = f })
+		neon("DeckScreen", x + 0.25, x + w - 0.25, FLOOR + 6.55, FLOOR + 6.7, 92.0, 93.2, (i == 3) and C.orange or C.ice, f)
+		box("DeckJog", x + 0.55, x + w - 0.55, FLOOR + 6.7, FLOOR + 6.85, 92.3, 92.9, C.steel, M.Metal, { collide = false, parent = f })
 	end
-	for col = 0, 8 do
-		for row = 0, 4 do
-			local x = -41 + col * 2.75
-			local y = FLOOR + 6 + row * 2
-			neon("Bulb", x - 0.4, x + 0.4, y - 0.4, y + 0.4, 98.4, 98.9, C.orange, f)
+	-- booth backdrop LED wall
+	for col = 0, 10 do
+		for row = 0, 5 do
+			local x = -41.5 + col * 2.35
+			local y = FLOOR + 6.2 + row * 1.85
+			neon("Bulb", x - 0.35, x + 0.35, y - 0.35, y + 0.35, 98.55, 98.95, (row % 2 == 0) and C.orange or C.red, f)
 		end
 	end
-	lamp("BulbGlow", -36, FLOOR + 10, 96.5, C.orange, 1.6, 22, f)
-	lamp("BulbGlow", -24, FLOOR + 10, 96.5, C.orange, 1.6, 22, f)
-	panel("CharlotteSign", -40, -20, FLOOR + 16, FLOOR + 17.6, 98.5, 98.95, Enum.NormalId.Front, "CHARLOTTE DE WITTE", C.white, C.black, "GothamBlack", f)
+	lamp("BulbGlow", -36, FLOOR + 10, 96.5, C.orange, 2.0, 26, f)
+	lamp("BulbGlow", -24, FLOOR + 10, 96.5, C.red, 1.8, 24, f)
+	panel("CharlotteSign", -40, -20, FLOOR + 15.5, FLOOR + 17.8, 98.55, 98.95, Enum.NormalId.Front, "CHARLOTTE DE WITTE", C.white, C.black, "GothamBlack", f)
+	panel("CharlotteSub", -36, -24, FLOOR + 14.2, FLOOR + 15.3, 98.55, 98.9, Enum.NormalId.Front, "BASEMENT · MAIN", C.red, C.black, "GothamBold", f)
 
-	for _, x0 in ipairs({ -50, -16 }) do
-		box("Stack", x0, x0 + 6, FLOOR, FLOOR + 14, 86, 93, C.black, M.SmoothPlastic, { parent = f })
-		for k = 0, 2 do
-			local y = FLOOR + 1.5 + k * 4.2
-			box("Driver", x0 + 0.6, x0 + 5.4, y, y + 3.4, 85.8, 86, C.nearBlack, M.DiamondPlate, { collide = false, parent = f })
-		end
-	end
+	-- Funktion-One-ish stacks flanking booth
+	f1Stack("F1L", -52, -46, 86, 93.5, f)
+	f1Stack("F1R", -14, -8, 86, 93.5, f)
+	-- side fills
+	box("FillL", -56, -53, FLOOR, FLOOR + 8, 88, 92, C.black, M.SmoothPlastic, { parent = f })
+	box("FillR", -7, -4, FLOOR, FLOOR + 8, 88, 92, C.black, M.SmoothPlastic, { parent = f })
 
-	for _, x in ipairs({ -42, -18 }) do
-		local fogger = box("Fogger", x - 1, x + 1, FLOOR, FLOOR + 1, 87, 88.5, C.black, M.Metal, { parent = f })
+	for _, x in ipairs({ -44, -30, -16 }) do
+		local fogger = box("Fogger", x - 1.1, x + 1.1, FLOOR, FLOOR + 1.2, 86.5, 88.2, C.black, M.Metal, { parent = f })
 		pcall(function()
 			local s = Instance.new("Smoke")
-			s.Color = Color3.fromRGB(90, 80, 100)
-			s.Opacity = 0.06
-			s.RiseVelocity = 1.5
-			s.Size = 14
+			s.Color = Color3.fromRGB(70, 60, 80)
+			s.Opacity = 0.08
+			s.RiseVelocity = 1.8
+			s.Size = 16
 			s.Parent = fogger
 		end)
 	end
 
-	for _, x in ipairs({ -50, -30, -10 }) do
-		for _, z in ipairs({ 60, 76 }) do
-			box("Pillar", x - 1.5, x + 1.5, FLOOR, CEIL, z - 1.5, z + 1.5, C.concrete, M.Concrete, { parent = f })
+	for _, x in ipairs({ -52, -36, -20, -6 }) do
+		for _, z in ipairs({ 58, 70, 82 }) do
+			box("Pillar", x - 1.35, x + 1.35, FLOOR, CEIL, z - 1.35, z + 1.35, C.concrete, M.Concrete, { parent = f })
+			box("PillarBand", x - 1.45, x + 1.45, FLOOR + 8, FLOOR + 8.4, z - 1.45, z + 1.45, C.metal, M.Metal, {
+				collide = false,
+				parent = f,
+			})
 		end
 	end
 
@@ -1373,10 +1441,21 @@ section("Main floor", function()
 		table.insert(FX.lasers, beam)
 	end
 
-	local barCounter = box("BarCounter", -57, -37, FLOOR, FLOOR + 3.6, 48, 50.5, C.nearBlack, M.Concrete, { parent = f })
-	box("BarTop", -57.3, -36.7, FLOOR + 3.6, FLOOR + 4, 47.8, 50.8, C.wood, M.Wood, { parent = f })
-	neon("BarUnderglow", -57, -37, FLOOR + 0.3, FLOOR + 0.5, 50.5, 50.7, C.red, f)
-	local drinkPad = box("DrinkPad", -48, -44, FLOOR + 4, FLOOR + 4.15, 49.2, 50.2, C.amber, M.Neon, { collide = false, parent = f })
+	local barCounter = box("BarCounter", -57, -37, FLOOR, FLOOR + 3.8, 47.6, 51.0, C.nearBlack, M.Concrete, { parent = f })
+	box("BarFrontFace", -57, -37, FLOOR, FLOOR + 3.8, 50.85, 51.05, C.black, M.SmoothPlastic, { parent = f })
+	box("BarTop", -57.4, -36.6, FLOOR + 3.8, FLOOR + 4.15, 47.4, 51.2, Color3.fromRGB(90, 70, 50), M.Wood, { parent = f })
+	box("BarKick", -57, -37, FLOOR, FLOOR + 0.35, 50.9, 51.15, C.metal, M.DiamondPlate, { parent = f })
+	neon("BarUnderglow", -57, -37, FLOOR + 0.2, FLOOR + 0.45, 51.05, 51.25, C.red, f)
+	-- glass rail / speed rail silhouette
+	box("SpeedRail", -56.5, -37.5, FLOOR + 4.15, FLOOR + 4.35, 47.55, 47.85, C.steel, M.Metal, { collide = false, parent = f })
+	for gx = -55, -39, 2 do
+		box("Glass", gx, gx + 0.35, FLOOR + 4.35, FLOOR + 5.1, 47.6, 47.85, C.ice, M.Glass, {
+			collide = false,
+			transparency = 0.45,
+			parent = f,
+		})
+	end
+	local drinkPad = box("DrinkPad", -48, -44, FLOOR + 4.15, FLOOR + 4.3, 49.0, 50.4, C.amber, M.Neon, { collide = false, parent = f })
 	drinkPad:SetAttribute("Interact", "Drink")
 	makePrompt(drinkPad, "Buy drink", "Bar", 0.7, 10)
 	barCounter:SetAttribute("Interact", "Drink")
@@ -1449,43 +1528,53 @@ end)
 section("Dark rooms", function()
 	local f = folder("7 Dark Rooms")
 	local top = DOOR_TOP
-	wallZ("LinerW", 1.1, 46, 99, { { 62, 74 } }, { y0 = FLOOR, y1 = top, thick = 0.2, color = C.black, material = M.SmoothPlastic, parent = f })
-	wallZ("LinerE", 33.9, 46, 99, { { 76, 86 } }, { y0 = FLOOR, y1 = top, thick = 0.2, color = C.black, material = M.SmoothPlastic, parent = f })
-	wallX("LinerS", 46.1, 1, 34, { { 4, 12 } }, { y0 = FLOOR, y1 = top, thick = 0.2, color = C.black, material = M.SmoothPlastic, parent = f })
-	wallX("LinerN", 98.9, 1, 34, {}, { y0 = FLOOR, y1 = top, thick = 0.2, color = C.black, material = M.SmoothPlastic, parent = f })
+	wallZ("LinerW", 1.1, 46, 99, { { 62, 74 } }, { y0 = FLOOR, y1 = top, thick = 0.25, color = C.black, material = M.SmoothPlastic, parent = f })
+	wallZ("LinerE", 33.9, 46, 99, { { 76, 86 } }, { y0 = FLOOR, y1 = top, thick = 0.25, color = C.black, material = M.SmoothPlastic, parent = f })
+	wallX("LinerS", 46.1, 1, 34, { { 4, 12 } }, { y0 = FLOOR, y1 = top, thick = 0.25, color = C.black, material = M.SmoothPlastic, parent = f })
+	wallX("LinerN", 98.9, 1, 34, {}, { y0 = FLOOR, y1 = top, thick = 0.25, color = C.black, material = M.SmoothPlastic, parent = f })
 
 	local function block(name, x0, x1, z0, z1)
 		box(name, x0, x1, FLOOR, top, z0, z1, C.nearBlack, M.Slate, { parent = f })
 	end
-	local function nookBench(x0, x1, z0, z1, lx, lz)
-		box("NookBench", x0, x1, FLOOR, FLOOR + 1.6, z0, z1, C.black, M.Leather, { parent = f })
-		local l = lamp("NookEmber", lx, FLOOR + 7, lz, Color3.fromRGB(170, 30, 20), 0.45, 9, f)
+	local function nook(x0, x1, z0, z1, lx, lz)
+		-- leather couch + curtain feel
+		box("Couch", x0, x1, FLOOR, FLOOR + 1.5, z0, z1, C.black, M.Leather, { parent = f })
+		box("CouchBack", x0, x1, FLOOR + 1.5, FLOOR + 3.2, z1 - 0.35, z1, C.black, M.Leather, { parent = f })
+		box("Curtain", x0 - 0.15, x0 + 0.05, FLOOR, top - 0.5, z0, z1, Color3.fromRGB(40, 10, 16), M.Fabric, {
+			collide = false,
+			parent = f,
+		})
+		box("Curtain2", x1 - 0.05, x1 + 0.15, FLOOR, top - 0.5, z0, z1, Color3.fromRGB(40, 10, 16), M.Fabric, {
+			collide = false,
+			parent = f,
+		})
+		local l = lamp("NookEmber", lx, FLOOR + 5.5, lz, Color3.fromRGB(140, 25, 18), 0.32, 8, f)
 		table.insert(FX.embers, l:FindFirstChildOfClass("PointLight"))
 	end
 	block("BlockSW", 6, 14.5, 51.5, 57.5)
 	block("BlockSW", 6, 14.5, 63.5, 69.5)
 	block("BlockSW", 6, 10.5, 57.5, 63.5)
-	nookBench(10.5, 11.9, 58, 63, 12.5, 60.5)
+	nook(10.5, 11.9, 58, 63, 12.5, 60.5)
 	block("BlockSE", 20.5, 29, 51.5, 57.5)
 	block("BlockSE", 20.5, 29, 63.5, 69.5)
 	block("BlockSE", 24.5, 29, 57.5, 63.5)
-	nookBench(23.1, 24.5, 58, 63, 22.5, 60.5)
+	nook(23.1, 24.5, 58, 63, 22.5, 60.5)
 	block("BlockNW", 6, 14.5, 75.5, 81.5)
 	block("BlockNW", 6, 14.5, 87.5, 93.5)
 	block("BlockNW", 6, 10.5, 81.5, 87.5)
-	nookBench(10.5, 11.9, 82, 87, 12.5, 84.5)
+	nook(10.5, 11.9, 82, 87, 12.5, 84.5)
 	block("BlockNE", 20.5, 29, 75.5, 81.5)
 	block("BlockNE", 20.5, 29, 87.5, 93.5)
 	block("BlockNE", 24.5, 29, 81.5, 87.5)
-	nookBench(23.1, 24.5, 82, 87, 22.5, 84.5)
+	nook(23.1, 24.5, 82, 87, 22.5, 84.5)
 
 	for _, pos in ipairs({ { 3.5, 50 }, { 3.5, 95 }, { 31.5, 50 }, { 31.5, 95 }, { 17.5, 50 }, { 17.5, 96 } }) do
-		local e = neon("Ember", pos[1] - 0.3, pos[1] + 0.3, top - 0.8, top - 0.4, pos[2] - 0.3, pos[2] + 0.3, Color3.fromRGB(150, 20, 10), f)
-		table.insert(FX.embers, addLight(e, "PointLight", Color3.fromRGB(170, 30, 20), 0.5, 14, { shadows = false }))
+		local e = neon("Ember", pos[1] - 0.25, pos[1] + 0.25, top - 0.7, top - 0.35, pos[2] - 0.25, pos[2] + 0.25, Color3.fromRGB(120, 15, 10), f)
+		table.insert(FX.embers, addLight(e, "PointLight", Color3.fromRGB(130, 20, 15), 0.35, 11, { shadows = false }))
 	end
-	local bulb = neon("BareBulb", 17.2, 17.8, top - 2.2, top - 1.6, 72.2, 72.8, C.amber, f)
-	box("BulbCord", 17.45, 17.55, top - 1.6, top, 72.45, 72.55, C.black, M.Rubber, { collide = false, parent = f })
-	addLight(bulb, "PointLight", C.amber, 0.7, 16, { shadows = true })
+	local bulb = neon("BareBulb", 17.2, 17.8, top - 2.4, top - 1.8, 72.2, 72.8, Color3.fromRGB(180, 120, 60), f)
+	box("BulbCord", 17.45, 17.55, top - 1.8, top, 72.45, 72.55, C.black, M.Rubber, { collide = false, parent = f })
+	addLight(bulb, "PointLight", Color3.fromRGB(160, 90, 40), 0.45, 12, { shadows = true })
 end)
 
 ----------------------------------------------------------------
@@ -1503,20 +1592,33 @@ section("Studio", function()
 	diag.Parent = f
 
 	box("StudioRiser", 50, 59, FLOOR, FLOOR + 2.5, 24, 38, C.concreteDark, M.Concrete, { parent = f })
-	box("StudioDesk", 52, 54.5, FLOOR + 2.5, FLOOR + 6, 27, 35, C.black, M.SmoothPlastic, { parent = f })
-	neon("StudioDeckScreens", 52.2, 52.4, FLOOR + 6, FLOOR + 6.3, 28, 34, C.ice, f)
-	for row = 0, 4 do
-		for col = 0, 5 do
-			local z = 25.5 + col * 2.3
-			local y = FLOOR + 6 + row * 2
-			neon("StudioBulb", 58.4, 58.9, y - 0.35, y + 0.35, z - 0.35, z + 0.35, C.ice, f)
+	box("StudioRiserLip", 49.8, 59.2, FLOOR + 2.5, FLOOR + 2.75, 23.7, 24.1, C.metal, M.DiamondPlate, { parent = f })
+	box("StudioDesk", 51.5, 55, FLOOR + 2.5, FLOOR + 5.6, 26.5, 35.5, C.black, M.SmoothPlastic, { parent = f })
+	box("StudioDeskTop", 51.3, 55.2, FLOOR + 5.6, FLOOR + 5.85, 26.3, 35.7, C.metal, M.DiamondPlate, { parent = f })
+	for i, z in ipairs({ 27.5, 29.5, 31.5, 33.5 }) do
+		box("StudioDeck", 52, 54.5, FLOOR + 5.85, FLOOR + 6.35, z, z + 1.6, C.nearBlack, M.Metal, { collide = false, parent = f })
+		neon("StudioDeckScreen", 52.15, 54.35, FLOOR + 6.35, FLOOR + 6.5, z + 0.2, z + 1.4, (i % 2 == 0) and C.ice or C.blue, f)
+	end
+	for row = 0, 5 do
+		for col = 0, 6 do
+			local z = 24.8 + col * 2.1
+			local y = FLOOR + 6 + row * 1.85
+			neon("StudioBulb", 58.35, 58.9, y - 0.3, y + 0.3, z - 0.3, z + 0.3, C.ice, f)
 		end
 	end
+	f1Stack("StudioF1", 44, 49, 30, 36, f)
 	panel("StudioSign", 58.5, 58.95, FLOOR + 15.2, FLOOR + 17.2, 25, 37, Enum.NormalId.Left, "STUDIO", C.ice, C.black, "GothamBlack", f)
 
-	box("StudioBarCounter", 18, 34, FLOOR, FLOOR + 3.6, 40, 42.5, C.nearBlack, M.Concrete, { parent = f })
-	box("StudioBarTop", 17.7, 34.3, FLOOR + 3.6, FLOOR + 4, 39.8, 42.8, C.steel, M.Metal, { parent = f })
+	box("StudioBarCounter", 18, 34, FLOOR, FLOOR + 3.7, 39.8, 42.8, C.nearBlack, M.Concrete, { parent = f })
+	box("StudioBarTop", 17.6, 34.4, FLOOR + 3.7, FLOOR + 4.05, 39.5, 43.1, C.steel, M.Metal, { parent = f })
 	box("StudioBackShelf", 18, 34, FLOOR + 5, FLOOR + 5.25, 43, 44, C.metal, M.Metal, { collide = false, parent = f })
+	for bx = 19, 33, 1.2 do
+		box("StudioBottle", bx, bx + 0.4, FLOOR + 5.25, FLOOR + 6.5, 43.2, 43.7, C.amber, M.Glass, {
+			collide = false,
+			transparency = 0.3,
+			parent = f,
+		})
+	end
 	neon("StudioBarStrip", 18, 34, FLOOR + 9, FLOOR + 9.25, 43.7, 43.95, C.blue, f)
 	panel("StudioBarSign", 23, 29, FLOOR + 9.8, FLOOR + 11.8, 43.6, 43.95, Enum.NormalId.Front, "BAR", C.white, C.black, "GothamBlack", f)
 
@@ -1559,24 +1661,24 @@ section("The Stalls", function()
 		collide = false,
 		parent = f,
 	})
-	graffitiOn(eastGraff, Enum.NormalId.Left, 36)
+	graffitiOn(eastGraff, Enum.NormalId.Left, 42)
 	local westGraff = box("WestGraffitiWall", 61.3, 61.45, FLOOR, stallH, 16, 40, C.tile, M.SmoothPlastic, {
 		collide = false,
 		parent = f,
 	})
-	graffitiOn(westGraff, Enum.NormalId.Right, 28)
+	graffitiOn(westGraff, Enum.NormalId.Right, 34)
 
 	local edges = { 3, 9.6, 16.2, 22.8, 29.4, 36.0, 42.6 }
 	for i, z in ipairs(edges) do
-		local part = box("StallPartition", 80, 88.8, FLOOR, stallH, z - 0.2, z + 0.2, C.white, M.SmoothPlastic, { parent = f })
-		graffitiOn(part, Enum.NormalId.Front, 18)
-		graffitiOn(part, Enum.NormalId.Back, 18)
+		local part = box("StallPartition", 80, 88.8, FLOOR, stallH, z - 0.2, z + 0.2, Color3.fromRGB(230, 228, 220), M.SmoothPlastic, { parent = f })
+		graffitiOn(part, Enum.NormalId.Front, 22)
+		graffitiOn(part, Enum.NormalId.Back, 22)
 		if i < #edges then
 			local zA, zB = z, edges[i + 1]
 			local doorL = box("StallFront", 80, 80.4, FLOOR, stallH, zA, zA + 1.05, C.nearBlack, M.Metal, { parent = f })
 			local doorR = box("StallFront", 80, 80.4, FLOOR, stallH, zB - 1.05, zB, C.nearBlack, M.Metal, { parent = f })
-			graffitiOn(doorL, Enum.NormalId.Right, 14)
-			graffitiOn(doorR, Enum.NormalId.Right, 14)
+			graffitiOn(doorL, Enum.NormalId.Right, 16)
+			graffitiOn(doorR, Enum.NormalId.Right, 16)
 			box("Latch", 79.7, 80.1, FLOOR + 4, FLOOR + 4.6, (zA + zB) / 2 - 0.15, (zA + zB) / 2 + 0.15, C.steel, M.Metal, { collide = false, parent = f })
 
 			local mid = (zA + zB) / 2
@@ -1608,10 +1710,12 @@ section("The Stalls", function()
 	panel("MadMaxStall", 88.6, 88.75, FLOOR + 4.6, FLOOR + 9.2, 23.4, 28.8, Enum.NormalId.Left, "MAD MAX RAVE CREW 4 EVA!", C.red, nil, "PermanentMarker", f, true)
 	panel("MadMaxMural", 64, 86, FLOOR + 9.5, FLOOR + 15.5, 43.75, 43.8, Enum.NormalId.Front, "MAD MAX RAVE CREW 4 EVA!", C.red, nil, "PermanentMarker", f, true)
 	local muralBoard = box("MuralBoard", 64, 86, FLOOR + 9.5, FLOOR + 15.5, 43.6, 43.7, C.nearBlack, M.SmoothPlastic, { collide = false, parent = f })
-	graffitiOn(muralBoard, Enum.NormalId.Front, 32)
-	-- extra layered Mad Max board (photo-ref density)
+	graffitiOn(muralBoard, Enum.NormalId.Front, 38)
+	-- extra layered Mad Max boards (photo-ref density)
 	local mural2 = box("MuralLayer2", 66, 84, FLOOR + 10, FLOOR + 14.5, 43.5, 43.58, C.nearBlack, M.SmoothPlastic, { collide = false, parent = f })
-	graffitiOn(mural2, Enum.NormalId.Front, 24)
+	graffitiOn(mural2, Enum.NormalId.Front, 28)
+	local mural3 = box("MuralLayer3", 68, 82, FLOOR + 3, FLOOR + 8.5, 43.48, 43.55, C.nearBlack, M.SmoothPlastic, { collide = false, parent = f })
+	graffitiOn(mural3, Enum.NormalId.Front, 22)
 
 	box("SinkCounter", 61.2, 64, FLOOR, FLOOR + 3.6, 17, 39, C.concrete, M.Marble, { parent = f })
 	for _, z in ipairs({ 20, 25, 30, 35 }) do

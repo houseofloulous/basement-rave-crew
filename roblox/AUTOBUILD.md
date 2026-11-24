@@ -1,6 +1,7 @@
 # Auto-build Basement — one paste
 
-Paste the full `BuildBasement.server.lua` into **ServerScriptService → Script**. Leave it there — it rebuilds on every Play / join.
+Paste the full `BuildBasement.server.lua` into **ServerScriptService → Script**.  
+**Leave the Script there** — it rebuilds `Workspace.BasementClub` on every Play / join.
 
 ## Steps
 
@@ -11,20 +12,16 @@ Paste the full `BuildBasement.server.lua` into **ServerScriptService → Script*
 4. **Play ▶** once — wait for `[Basement] Club built…`
 5. Walk courtyard → gate → club → **Stop** → **Publish**
 
-Builds `Workspace.BasementClub` (also clears old `BasementAuto`). Avatars later.
+## Interactive flow (ProximityPrompt — press **E** / tap)
 
-## After paste — interactive flow
+1. Courtyard line: optional **Play as Sam / Mike / Max / Chris** (still all black + harness)
+2. **Show ID** (bouncer + guest pass flash) → **Dress-code check**
+3. Gate opens → **Put bag & coat · lock** (bag/coat appear in front of locker, LOCKED)
+4. Hub: **Get water**, **Buy snack**
+5. Main: hear **DJ music** (loud on dancefloor) · **Buy drink** · stand on neon pad → **Press E to dance**
+6. Each completed stop plays a club **pew-pew** zap + toast
+7. The Stalls: **Take paper**, **Flush**, **Wash hands**
 
-Proximity prompts (**E** / tap) on the club path:
+Free assets only: DJ `rbxassetid://1837849285` (Creator docs Upbeat Electronica), engine SFX, free Black Jeans pants `382537569`, default dance anims.
 
-1. **Show ID** (see guest pass + bouncers) → **Dress-code check** (all black + harness)
-2. Security gate opens → **Put bag & coat · lock** at lockers
-3. Hub: **Get water**, **Buy snack**
-4. Main floor: hear **DJ music**, **Buy drink**, stand on neon pad → **Press E to dance**
-5. Completing a stop plays a club **pew-pew** SFX
-6. The Stalls: **Take paper**, **Flush**, **Wash hands**
-
-Optional client tip: paste `BasementClient.local.lua` into StarterPlayerScripts (server already covers the flow).
-
-One-shot rebuild: leave the Script in ServerScriptService; every Play rebuilds `Workspace.BasementClub`.
-Free assets only (Roblox tutorial music ID + engine `electronicpingshort` SFX + default dance anims).
+Optional client tip script: `BasementClient.local.lua` → StarterPlayerScripts (not required).

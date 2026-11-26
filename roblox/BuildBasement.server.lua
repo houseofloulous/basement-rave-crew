@@ -15,9 +15,10 @@
 
   Interactions (ProximityPrompts, server-only): show ID → dress-code →
   lockers (bag + coat) → snacks/drinks/water → dance → toilet paper / flush / wash.
-  Free audio: APM "Berlin In Space" techno (1838490526) — dark warehouse
-  stand-in for Charlotte / hard techno (NOT upbeat tutorial electronica).
-  Avatar: all-black BodyColors + harness on spawn; Sam/Mike/Max/Chris picker.
+  Free audio: "BASS PHASE Hard Techno" (103670853396649) — dark hard techno
+  warehouse kick (Charlotte vibe stand-in). Never cute/light/upbeat beds.
+  Visible held props for drink/snack/water/TP; flush/wash particle cues.
+  Avatar: all-black + harness; Sam/Mike/Max/Chris picker.
 
   Safe to re-run: it deletes its previous build first.
 ]]
@@ -321,11 +322,12 @@ local function notify(player, text)
 end
 
 -- Free Roblox audio + built-in SFX (no paid assets)
--- DJ bed: APM "Berlin In Space" (Techno) — free Creator Store stand-in for
--- Charlotte de Witte / deep dark hard techno warehouse pulse. NOT upbeat tutorial electronica.
--- Asset: rbxassetid://1838490526 — name: Berlin In Space — genre: Techno
-local DJ_MUSIC_ID = "rbxassetid://1838490526"
-local DJ_MUSIC_NAME = "Berlin In Space (APM Techno — free CdW stand-in)"
+-- DJ bed: Creator Store "BASS PHASE Hard Techno" — dark driving hard techno kick.
+-- Free stand-in for Charlotte de Witte / warehouse hard techno (NOT cute/light/Berlin-In-Space).
+-- Asset: rbxassetid://103670853396649 — name: BASS PHASE Hard Techno — DistrokidOfficial
+-- Alt verified industrial: 136969282109646 STEEL OVER FLESH (Hard Industrial Techno)
+local DJ_MUSIC_ID = "rbxassetid://103670853396649"
+local DJ_MUSIC_NAME = "BASS PHASE Hard Techno (free CdW / dark hard techno stand-in)"
 local PEW_SFX = "rbxasset://sounds/electronicpingshort.wav"
 local PEW_CLICK = "rbxasset://sounds/switch.wav"
 local DANCE_ANIM_IDS = {
@@ -652,41 +654,298 @@ local function makeIdCardProp(name, x0, x1, y0, y1, z0, z1, parent, face)
 	return card
 end
 
+local HELD_PROP_NAMES = {
+	HeldGuestID = true,
+	HeldDrink = true,
+	HeldSnack = true,
+	HeldWater = true,
+	HeldTP = true,
+}
+
+local function clearHeldProps(character, keepName)
+	for _, ch in ipairs(character:GetChildren()) do
+		if HELD_PROP_NAMES[ch.Name] and ch.Name ~= keepName then
+			ch:Destroy()
+		end
+	end
+end
+
+local function getHand(character)
+	return character:FindFirstChild("RightHand")
+		or character:FindFirstChild("Right Arm")
+		or character:FindFirstChild("LeftHand")
+		or character:FindFirstChild("Head")
+end
+
+local function weldHeldProp(player, name, size, color, material, offset, extras)
+	local char = player.Character
+	if not char then
+		return nil
+	end
+	local hand = getHand(char)
+	if not hand then
+		return nil
+	end
+	clearHeldProps(char, name)
+	local old = char:FindFirstChild(name)
+	if old then
+		old:Destroy()
+	end
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = size
+	p.Color = color
+	p.Material = material or M.SmoothPlastic
+	p.CanCollide = false
+	p.Massless = true
+	p.CastShadow = true
+	p.CFrame = hand.CFrame * (offset or CFrame.new(0, -0.2, -0.7))
+	p.Parent = char
+	local w = Instance.new("WeldConstraint")
+	w.Part0 = hand
+	w.Part1 = p
+	w.Parent = p
+	if extras then
+		extras(p, hand, char)
+	end
+	return p
+end
+
+local function emitSplash(atPart, color, lifetime)
+	if not atPart then
+		return
+	end
+	pcall(function()
+		local att = Instance.new("Attachment")
+		att.Name = "SplashAtt"
+		att.Parent = atPart
+		local pe = Instance.new("ParticleEmitter")
+		pe.Color = ColorSequence.new(color or Color3.fromRGB(180, 200, 220))
+		pe.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.35),
+			NumberSequenceKeypoint.new(1, 0.05),
+		})
+		pe.Lifetime = NumberSequence.new(0.15)
+		pe.Lifetime = NumberRange.new(0.4, 0.9)
+		pe.Speed = NumberRange.new(4, 10)
+		pe.SpreadAngle = Vector2.new(40, 40)
+		pe.Rate = 60
+		pe.LightEmission = 0.2
+		pe.Parent = att
+		pe:Emit(28)
+		task.delay(lifetime or 1.4, function()
+			if att.Parent then
+				att:Destroy()
+			end
+		end)
+	end)
+end
+
 local function showPlayerIdCard(player)
 	local char = player.Character
 	if not char then
 		return
 	end
-	local hand = char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm") or char:FindFirstChild("Head")
-	if not hand then
-		return
-	end
-	local old = char:FindFirstChild("HeldGuestID")
-	if old then
-		old:Destroy()
-	end
 	local crewName = playerCrew[player.UserId] or player.DisplayName or player.Name
-	local card = Instance.new("Part")
-	card.Name = "HeldGuestID"
-	card.Size = Vector3.new(0.12, 1.5, 2.3)
-	card.Color = Color3.fromRGB(250, 248, 240)
-	card.Material = M.SmoothPlastic
-	card.CanCollide = false
-	card.Massless = true
-	card.CFrame = hand.CFrame * CFrame.new(0, -0.15, -0.85)
-	card.Parent = char
-	local w = Instance.new("WeldConstraint")
-	w.Part0 = hand
-	w.Part1 = card
-	w.Parent = card
-	sign(card, Enum.NormalId.Front, "BASEMENT GUEST\n" .. tostring(crewName), C.black, Color3.fromRGB(250, 248, 240), "GothamBlack")
-	sign(card, Enum.NormalId.Back, "ID OK", C.white, C.red, "GothamBlack")
+	local card = weldHeldProp(
+		player,
+		"HeldGuestID",
+		Vector3.new(0.12, 1.5, 2.3),
+		Color3.fromRGB(250, 248, 240),
+		M.SmoothPlastic,
+		CFrame.new(0, -0.15, -0.85)
+	)
+	if card then
+		sign(card, Enum.NormalId.Front, "BASEMENT GUEST\n" .. tostring(crewName), C.black, Color3.fromRGB(250, 248, 240), "GothamBlack")
+		sign(card, Enum.NormalId.Back, "ID OK", C.white, C.red, "GothamBlack")
+	end
 	flashPassGui(player, crewName)
-	task.delay(10, function()
-		if card.Parent then
+	task.delay(12, function()
+		if card and card.Parent then
 			card:Destroy()
 		end
 	end)
+end
+
+local function giveDrink(player)
+	local glass = weldHeldProp(
+		player,
+		"HeldDrink",
+		Vector3.new(0.45, 1.1, 0.45),
+		Color3.fromRGB(200, 220, 230),
+		M.Glass,
+		CFrame.new(0.15, -0.55, -0.55)
+	)
+	if glass then
+		glass.Transparency = 0.35
+		-- liquid fill
+		local liquid = Instance.new("Part")
+		liquid.Name = "Liquid"
+		liquid.Size = Vector3.new(0.32, 0.55, 0.32)
+		liquid.Color = Color3.fromRGB(180, 40, 30)
+		liquid.Material = M.SmoothPlastic
+		liquid.CanCollide = false
+		liquid.Massless = true
+		liquid.Transparency = 0.25
+		liquid.CFrame = glass.CFrame * CFrame.new(0, -0.15, 0)
+		liquid.Parent = glass
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = glass
+		w.Part1 = liquid
+		w.Parent = liquid
+	end
+	-- brief pour cue at bar pad if nearby
+	task.defer(function()
+		local char = player.Character
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		if root then
+			emitSplash(root, Color3.fromRGB(200, 60, 40), 0.8)
+		end
+	end)
+end
+
+local function giveSnack(player)
+	local bag = weldHeldProp(
+		player,
+		"HeldSnack",
+		Vector3.new(0.7, 1.0, 0.35),
+		Color3.fromRGB(220, 40, 40),
+		M.SmoothPlastic,
+		CFrame.new(0.2, -0.4, -0.6)
+	)
+	if bag then
+		sign(bag, Enum.NormalId.Front, "SNACK", C.white, C.red, "GothamBlack")
+	end
+end
+
+local function giveWater(player)
+	local bottle = weldHeldProp(
+		player,
+		"HeldWater",
+		Vector3.new(0.4, 1.2, 0.4),
+		Color3.fromRGB(160, 200, 230),
+		M.Glass,
+		CFrame.new(0.15, -0.5, -0.55)
+	)
+	if bottle then
+		bottle.Transparency = 0.4
+		local cap = Instance.new("Part")
+		cap.Name = "Cap"
+		cap.Size = Vector3.new(0.35, 0.2, 0.35)
+		cap.Color = C.ice
+		cap.Material = M.SmoothPlastic
+		cap.CanCollide = false
+		cap.Massless = true
+		cap.CFrame = bottle.CFrame * CFrame.new(0, 0.55, 0)
+		cap.Parent = bottle
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = bottle
+		w.Part1 = cap
+		w.Parent = cap
+	end
+	task.defer(function()
+		local char = player.Character
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		if root then
+			emitSplash(root, Color3.fromRGB(160, 200, 255), 0.7)
+		end
+	end)
+end
+
+local function giveToiletPaper(player)
+	local roll = weldHeldProp(
+		player,
+		"HeldTP",
+		Vector3.new(0.55, 0.55, 0.55),
+		C.white,
+		M.SmoothPlastic,
+		CFrame.new(0.2, -0.25, -0.55)
+	)
+	if roll then
+		-- tube hole read
+		local tube = Instance.new("Part")
+		tube.Name = "Tube"
+		tube.Size = Vector3.new(0.25, 0.25, 0.6)
+		tube.Color = Color3.fromRGB(220, 200, 160)
+		tube.Material = M.SmoothPlastic
+		tube.CanCollide = false
+		tube.Massless = true
+		tube.CFrame = roll.CFrame
+		tube.Parent = roll
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = roll
+		w.Part1 = tube
+		w.Parent = tube
+	end
+end
+
+local function doFlush(player, flushPart)
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	-- splash on nearest toilet bowl / tank in the same folder
+	local splashHost = flushPart
+	if flushPart and flushPart.Parent then
+		local best, bestD = nil, math.huge
+		for _, ch in ipairs(flushPart.Parent:GetChildren()) do
+			if ch.Name == "ToiletBowl" or ch.Name == "ToiletTank" then
+				local d = (ch.Position - flushPart.Position).Magnitude
+				if d < bestD then
+					bestD = d
+					best = ch
+				end
+			end
+		end
+		if best then
+			splashHost = best
+		end
+	end
+	emitSplash(splashHost or (char and char:FindFirstChild("HumanoidRootPart")), Color3.fromRGB(170, 190, 210), 1.6)
+	if hum then
+		-- brief sit cue facing toilet
+		pcall(function()
+			hum.Sit = true
+			task.delay(1.1, function()
+				if hum.Parent then
+					hum.Sit = false
+					hum.Jump = true
+				end
+			end)
+		end)
+	end
+end
+
+local function doWashHands(player, faucet)
+	local char = player.Character
+	emitSplash(faucet, Color3.fromRGB(150, 190, 230), 1.8)
+	-- running water beam cue
+	if faucet then
+		pcall(function()
+			local stream = Instance.new("Part")
+			stream.Name = "WaterStream"
+			stream.Size = Vector3.new(0.12, 1.2, 0.12)
+			stream.Color = Color3.fromRGB(140, 180, 220)
+			stream.Material = M.Glass
+			stream.Transparency = 0.45
+			stream.CanCollide = false
+			stream.Anchored = true
+			stream.CFrame = faucet.CFrame * CFrame.new(0.4, -0.8, 0)
+			stream.Parent = faucet
+			emitSplash(stream, Color3.fromRGB(160, 200, 240), 1.5)
+			task.delay(1.6, function()
+				if stream.Parent then
+					stream:Destroy()
+				end
+			end)
+		end)
+	end
+	-- hand-at-sink: tuck held props briefly, lean toward faucet
+	if char then
+		local root = char:FindFirstChild("HumanoidRootPart")
+		if root and faucet then
+			local look = CFrame.lookAt(root.Position, Vector3.new(faucet.Position.X, root.Position.Y, faucet.Position.Z))
+			root.CFrame = look
+		end
+	end
 end
 
 local function playDance(player)
@@ -1307,10 +1566,11 @@ section("Hub", function()
 	lamp("WaterLight", -19, FLOOR + 7, 4, C.ice, 1, 12, f)
 
 	local snackMachine = box("SnackMachine", -7, -1, FLOOR, FLOOR + 8.5, 1, 4, C.nearBlack, M.Metal, { parent = f })
+	box("SnackFrame", -7.15, -0.85, FLOOR, FLOOR + 8.65, 0.85, 4.15, C.metal, M.DiamondPlate, { parent = f })
 	box("SnackGlass", -6.6, -2.6, FLOOR + 2.2, FLOOR + 7.6, 4.0, 4.15, C.glass, M.Glass, {
 		collide = false,
-		transparency = 0.4,
-		reflectance = 0.2,
+		transparency = 0.35,
+		reflectance = 0.25,
 		parent = f,
 	})
 	local snackColors = { C.red, C.orange, C.blue, C.green, C.magenta }
@@ -1321,11 +1581,15 @@ section("Hub", function()
 			local x = -6.1 + col * 1.25
 			local y = FLOOR + 2.6 + row * 1.3
 			neon("Snack", x, x + 0.8, y, y + 0.7, 3.6, 3.95, snackColors[(n % #snackColors) + 1], f)
+			box("SnackShelf", x - 0.05, x + 0.85, y - 0.12, y - 0.02, 3.55, 3.95, C.metal, M.Metal, {
+				collide = false,
+				parent = f,
+			})
 		end
 	end
 	local keypad = neon("SnackKeypad", -2.3, -1.4, FLOOR + 4, FLOOR + 6, 4.0, 4.15, C.green, f)
 	keypad:SetAttribute("Interact", "Snack")
-	makePrompt(keypad, "Buy snack", "Vending", 0.6, 8)
+	makePrompt(keypad, "Buy snack", "Vending — grab a bag", 0.6, 8)
 	snackMachine:SetAttribute("Interact", "Snack")
 	panel("SnackSign", -6.6, -1.4, FLOOR + 7.7, FLOOR + 8.4, 4.0, 4.15, Enum.NormalId.Back, "SNACKS", C.white, C.red, "GothamBlack", f)
 	lamp("SnackLight", -4, FLOOR + 6, 6, C.ice, 0.8, 10, f)
@@ -1457,8 +1721,15 @@ section("Main floor", function()
 	end
 	local drinkPad = box("DrinkPad", -48, -44, FLOOR + 4.15, FLOOR + 4.3, 49.0, 50.4, C.amber, M.Neon, { collide = false, parent = f })
 	drinkPad:SetAttribute("Interact", "Drink")
-	makePrompt(drinkPad, "Buy drink", "Bar", 0.7, 10)
+	makePrompt(drinkPad, "Buy drink", "Bar — glass in hand", 0.7, 10)
 	barCounter:SetAttribute("Interact", "Drink")
+	-- backbar pour station + ice well (visible action set dressing)
+	box("IceWell", -50, -46, FLOOR + 4.15, FLOOR + 4.55, 47.9, 48.6, C.steel, M.Metal, { collide = false, parent = f })
+	box("PourMat", -49.5, -46.5, FLOOR + 4.15, FLOOR + 4.22, 49.2, 50.2, Color3.fromRGB(40, 40, 44), M.Rubber, {
+		collide = false,
+		parent = f,
+	})
+	neon("PourCue", -48.5, -47.5, FLOOR + 4.55, FLOOR + 4.7, 49.5, 49.9, C.amber, f)
 
 	-- Dance floor pad (main room center) — press E / tap prompt
 	local dance = box("DanceFloor", -40, -20, FLOOR + 0.05, FLOOR + 0.12, 58, 78, Color3.fromRGB(90, 20, 40), M.Neon, {
@@ -1518,8 +1789,34 @@ section("Main floor", function()
 	neon("AVScreens", -8, -3, FLOOR + 4.6, FLOOR + 5.8, 49.7, 49.9, C.ice, f)
 	panel("AVSign", -8.5, -2.5, FLOOR + 6.5, FLOOR + 7.7, 48.9, 49.1, Enum.NormalId.Back, "LIGHT / AV", C.white, C.black, "GothamBold", f)
 
-	lamp("MainWash", -30, CEIL - 3, 64, C.red, 2.2, 50, f)
-	lamp("MainWash2", -30, CEIL - 3, 90, C.magenta, 1.6, 36, f)
+	lamp("MainWash", -30, CEIL - 3, 64, C.red, 2.4, 55, f)
+	lamp("MainWash2", -30, CEIL - 3, 90, C.magenta, 1.8, 40, f)
+	lamp("MainWash3", -48, CEIL - 3, 72, C.red, 1.5, 32, f)
+	lamp("MainWash4", -12, CEIL - 3, 72, C.violet, 1.4, 30, f)
+
+	-- wall grit / skirting / radiator silhouettes (less empty box)
+	box("SkirtingN", -58, -2, FLOOR, FLOOR + 0.45, 98.6, 99.2, C.nearBlack, M.Metal, { parent = f })
+	box("SkirtingS", -58, -2, FLOOR, FLOOR + 0.45, 45.6, 46.2, C.nearBlack, M.Metal, { parent = f })
+	for _, x in ipairs({ -54, -40, -26, -12 }) do
+		box("Radiator", x - 1.5, x + 1.5, FLOOR + 0.5, FLOOR + 3.2, 45.4, 45.7, C.metal, M.CorrodedMetal, {
+			collide = false,
+			parent = f,
+		})
+	end
+	-- floor grit patches
+	for _, xz in ipairs({ { -45, 62 }, { -28, 70 }, { -35, 84 }, { -18, 58 } }) do
+		box("Grit", xz[1] - 2, xz[1] + 2, FLOOR + 0.02, FLOOR + 0.06, xz[2] - 1.5, xz[2] + 1.5, Color3.fromRGB(35, 30, 28), M.Pebble, {
+			collide = false,
+			parent = f,
+		})
+	end
+	-- hanging cable drops
+	for _, xz in ipairs({ { -40, 65 }, { -25, 75 }, { -35, 88 } }) do
+		box("DropCable", xz[1] - 0.08, xz[1] + 0.08, FLOOR + 8, CEIL - 1.5, xz[2] - 0.08, xz[2] + 0.08, C.black, M.Rubber, {
+			collide = false,
+			parent = f,
+		})
+	end
 end)
 
 ----------------------------------------------------------------
@@ -1718,18 +2015,34 @@ section("The Stalls", function()
 	graffitiOn(mural3, Enum.NormalId.Front, 22)
 
 	box("SinkCounter", 61.2, 64, FLOOR, FLOOR + 3.6, 17, 39, C.concrete, M.Marble, { parent = f })
+	box("SinkKick", 61.2, 64, FLOOR, FLOOR + 0.3, 17, 39, C.metal, M.DiamondPlate, { parent = f })
 	for _, z in ipairs({ 20, 25, 30, 35 }) do
 		box("Basin", 61.8, 63.4, FLOOR + 3.3, FLOOR + 3.65, z - 1, z + 1, C.white, M.SmoothPlastic, { collide = false, parent = f })
 		local faucet = box("Faucet", 61.3, 61.8, FLOOR + 3.6, FLOOR + 4.8, z - 0.15, z + 0.15, C.steel, M.Metal, { collide = false, parent = f })
 		faucet:SetAttribute("Interact", "WashHands")
-		makePrompt(faucet, "Wash hands", "Sink", 0.8, 8)
+		makePrompt(faucet, "Wash hands", "Sink — water runs", 0.8, 8)
+		box("Soap", 62.2, 62.7, FLOOR + 3.65, FLOOR + 4.1, z + 1.1, z + 1.45, C.ice, M.SmoothPlastic, {
+			collide = false,
+			parent = f,
+		})
 	end
 	box("Mirror", 61.2, 61.35, FLOOR + 5.5, FLOOR + 11, 17, 39, C.steel, M.Glass, { reflectance = 0.6, collide = false, parent = f })
+	box("PaperTowel", 61.4, 62.2, FLOOR + 5.8, FLOOR + 7.2, 16.2, 16.9, C.nearBlack, M.Metal, { collide = false, parent = f })
+	-- floor drain + stall wet patches (less empty tile box)
+	for _, z in ipairs({ 12, 22, 32 }) do
+		box("Drain", 70, 71.2, FLOOR + 0.01, FLOOR + 0.06, z, z + 1.2, C.metal, M.DiamondPlate, {
+			collide = false,
+			parent = f,
+		})
+	end
+	box("PipeChase", 88.2, 88.7, FLOOR + 4, CEIL - 1, 8, 10, C.rust, M.CorrodedMetal, { collide = false, parent = f })
+	cableTray("StallTray", 64, 86, CEIL - 2.2, 10, 12, f)
 
 	for _, x in ipairs({ 66, 74, 84 }) do
 		local tube = neon("FluoroTube", x - 0.3, x + 0.3, top - 0.6, top - 0.3, 4, 41, C.white, f)
 		addLight(tube, "SurfaceLight", C.white, 1.3, 20, { face = Enum.NormalId.Bottom, angle = 120 })
 	end
+	lamp("StallWash", 74, CEIL - 4, 22, C.white, 1.1, 28, f)
 end)
 
 ----------------------------------------------------------------
@@ -1918,15 +2231,18 @@ section("Interactions", function()
 		end,
 		Snack = function(player)
 			st(player).snack = true
-			succeed(player, "Snack acquired. $0 tonight.")
+			giveSnack(player)
+			succeed(player, "Snack in hand — red bag.")
 		end,
 		Drink = function(player)
 			st(player).drink = true
-			succeed(player, "Drink in hand. Cheers.")
+			giveDrink(player)
+			succeed(player, "Drink in hand — glass with pour.")
 		end,
 		Water = function(player)
 			st(player).water = true
-			succeed(player, "Cold water. Hydrate.")
+			giveWater(player)
+			succeed(player, "Water bottle in hand.")
 		end,
 		Dance = function(player)
 			st(player).danced = true
@@ -1935,15 +2251,18 @@ section("Interactions", function()
 		end,
 		ToiletPaper = function(player)
 			st(player).tp = true
-			succeed(player, "Paper grabbed.")
+			giveToiletPaper(player)
+			succeed(player, "TP roll in hand.")
 		end,
-		Flush = function(player)
+		Flush = function(player, part)
 			st(player).flushed = true
-			succeed(player, "Flushed.")
+			doFlush(player, part)
+			succeed(player, "Flushed — water splash.")
 		end,
-		WashHands = function(player)
+		WashHands = function(player, part)
 			st(player).washed = true
-			succeed(player, "Hands washed. Back to the floor.")
+			doWashHands(player, part)
+			succeed(player, "Washing — sink running.")
 		end,
 	}
 
